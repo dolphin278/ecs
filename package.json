@@ -1,0 +1,17 @@
+{
+  "name": "ecs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:dolphin278/ecs.git",
+  "author": "dolphin278 <dolphin278@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev:watch": "rollup -c rollup.config.js -w"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^5.0.2",
+    "rollup": "^2.23.1",
+    "tslib": "^2.0.1",
+    "typescript": "^3.9.7"
+  }
+}
