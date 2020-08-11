@@ -24,12 +24,26 @@ interface MassComponent {
   value: number;
 }
 
+type CanvasRenderComponent =
+  | {
+      kind: "rect";
+      strokeStyle: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }
+  | {
+      kind: "image";
+    };
+
 interface Entity {
   position?: PositionComponent;
   velocity?: VelocityComponent;
   acceleration?: AccelerationComponent;
   force?: ForceComponent;
   mass?: MassComponent;
+  canvasRender?: CanvasRenderComponent;
 }
 
 const WORLD_WIDTH = 500;
@@ -133,30 +147,49 @@ function ConsoleRenderSystem(world: World) {
 const canvas = document.getElementById("canvasRender") as HTMLCanvasElement;
 const canvasCtx = canvas.getContext("2d");
 
+function PhysicsRender(world: World) {
+  for (const entity of world.entities) {
+    if (entity.position) {
+      entity.canvasRender = {
+        kind: "rect",
+        strokeStyle: "red",
+        x: entity.position.x,
+        y: entity.position.y,
+        width: 10,
+        height: 10,
+      };
+      if (entity.mass) {
+        const size = entity.mass.value ** (1 / 3);
+        entity.canvasRender.width = 2 * size;
+        entity.canvasRender.height = 2 * size;
+      }
+    }
+  }
+}
+
 function CanvasRenderSystem(world: World) {
   if (!canvasCtx) return;
   canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
   for (const entity of world.entities) {
     const crossSize = entity.mass ? entity.mass.value ** (1 / 3) : 2;
     canvasCtx.beginPath();
-    if (entity.position) {
-      canvasCtx.moveTo(
-        entity.position.x - crossSize,
-        entity.position.y - crossSize
-      );
-      canvasCtx.lineTo(
-        entity.position.x + crossSize,
-        entity.position.y + crossSize
-      );
-      canvasCtx.moveTo(
-        entity.position.x + crossSize,
-        entity.position.y - crossSize
-      );
-      canvasCtx.lineTo(
-        entity.position.x - crossSize,
-        entity.position.y + crossSize
-      );
-      canvasCtx.stroke();
+    canvasCtx.strokeStyle = "black";
+
+    if (entity.canvasRender) {
+      const renderComponent = entity.canvasRender;
+      canvasCtx.beginPath();
+
+      switch (renderComponent.kind) {
+        case "rect":
+          canvasCtx.strokeStyle = renderComponent.strokeStyle;
+          canvasCtx.strokeRect(
+            renderComponent.x,
+            renderComponent.y,
+            renderComponent.width,
+            renderComponent.height
+          );
+      }
+      canvasCtx.closePath();
     }
   }
 }
@@ -172,6 +205,7 @@ class World {
     GravityForceSystem(this);
     ApplyForceSystem(this);
     ConsoleRenderSystem(this);
+    PhysicsRender(this);
     CanvasRenderSystem(this);
 
     this.currentTime += delta;
@@ -203,9 +237,18 @@ for (let i = 0; i < 40; i++) {
     mass: {
       value: 1000,
     },
+    canvasRender: {
+      kind: "rect",
+      strokeStyle: "red",
+      x: 10,
+      y: 10,
+      width: 10,
+      height: 10,
+    },
   });
 }
 
+// Star
 entities.push({
   position: {
     x: (WORLD_WIDTH / 2) | 0,
@@ -222,7 +265,26 @@ entities.push({
   mass: {
     value: 10000,
   },
+  canvasRender: {
+    kind: "rect",
+    strokeStyle: "orange",
+    x: 10,
+    y: 10,
+    width: 50,
+    height: 50,
+  },
 });
+
+//
+// entities.push({
+//   position: {
+//     x: 100,
+//     y: 100,
+//   },
+//   mass: {
+//     value: 10000
+//   }
+// });
 
 const world = new World(entities);
 let t0 = performance.now();
