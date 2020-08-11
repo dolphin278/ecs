@@ -116,9 +116,13 @@ for (let i = 0; i < 10; i++) {
 
 const world = new World(entities);
 let t0 = performance.now();
-setInterval(() => {
-  const delta = performance.now() - t0;
+
+const render = (currentTime: number) => {
+  const delta = currentTime - t0;
   t0 += delta;
-  // console.log("tick");
+  console.log("tick");
   world.tick(delta);
-}, 10);
+  requestAnimationFrame(render);
+};
+
+requestAnimationFrame(render);
