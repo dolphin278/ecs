@@ -58,9 +58,12 @@ function ConsoleRenderSystem(world: World) {
 const canvas = document.getElementById("canvasRender") as HTMLCanvasElement;
 const canvasCtx = canvas.getContext("2d");
 const crossSize = 2;
+
 function CanvasRenderSystem(world: World) {
   if (!canvasCtx) return;
+  canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
   for (const entity of world.entities) {
+    canvasCtx.beginPath();
     if (entity.position) {
       canvasCtx.moveTo(
         entity.position.x - crossSize,
@@ -89,7 +92,7 @@ class World {
   tick(delta: number) {
     MovementSystem(this, delta);
     BounceSystem(this);
-    ConsoleRenderSystem(this);
+    // ConsoleRenderSystem(this);
     CanvasRenderSystem(this);
 
     this.currentTime += delta;
@@ -116,6 +119,6 @@ let t0 = performance.now();
 setInterval(() => {
   const delta = performance.now() - t0;
   t0 += delta;
-  console.log("tick");
+  // console.log("tick");
   world.tick(delta);
 }, 10);
