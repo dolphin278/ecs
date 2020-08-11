@@ -10,9 +10,15 @@ interface VelocityComponent {
   y: number;
 }
 
+interface AccelerationComponent {
+  x: number;
+  y: number;
+}
+
 interface Entity {
   position?: PositionComponent;
   velocity?: VelocityComponent;
+  acceleration? :AccelerationComponent
 }
 
 const WORLD_WIDTH = 500;
@@ -45,6 +51,15 @@ function BounceSystem(world: World) {
         entity.velocity.y *= -1;
         entity.position.y = 0;
       }
+    }
+  }
+}
+
+function AccelerationSystem(world: World, delta: number) {
+  for (const entity of world.entities) {
+    if (entity.velocity && entity.acceleration) {
+      entity.velocity.x += entity.acceleration.x * delta;
+      entity.velocity.y += entity.acceleration.y * delta;
     }
   }
 }
@@ -92,6 +107,7 @@ class World {
   tick(delta: number) {
     MovementSystem(this, delta);
     BounceSystem(this);
+    AccelerationSystem(this, delta);
     // ConsoleRenderSystem(this);
     CanvasRenderSystem(this);
 
@@ -111,6 +127,10 @@ for (let i = 0; i < 10; i++) {
       x: Math.random() * maxVelocity - maxVelocity / 2,
       y: Math.random() * maxVelocity - maxVelocity / 2,
     },
+    acceleration: {
+      x: 0,
+      y: 0.01,
+    }
   });
 }
 
