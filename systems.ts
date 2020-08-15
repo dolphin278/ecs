@@ -15,14 +15,19 @@ import {
 
 // TODO: Add proper types
 export function singleEntitySystem(
-  components: Array<keyof Entity>,
+  components: Array<keyof Entity | keyof World["components"]>,
   fn: (...args: any[]) => void
 ) {
   return function (world: World, delta: number) {
     entityCycle: for (const entity of world.entities) {
       const args = [];
       for (const component of components) {
-        const componentData = Reflect.get(entity, component);
+        let componentData;
+        if (Reflect.has(world.components, component)) {
+          // @ts-ignore
+          componentData = world.components[component].get(entity);
+        } else componentData = Reflect.get(entity, component);
+
         if (!componentData) continue entityCycle;
         args.push(componentData);
       }
@@ -34,7 +39,7 @@ export function singleEntitySystem(
 }
 
 export const MovementSystem = singleEntitySystem(
-  ["position", "velocity"],
+  ["positionComponent", "velocityComponent"],
   (position: PositionComponent, velocity: VelocityComponent, delta: number) => {
     position.x += velocity.x * delta;
     position.y += velocity.y * delta;
@@ -42,7 +47,7 @@ export const MovementSystem = singleEntitySystem(
 );
 
 export const BounceSystem = singleEntitySystem(
-  ["position", "velocity"],
+  ["positionComponent", "velocityComponent"],
   (position: PositionComponent, velocity: VelocityComponent) => {
     if (position.x > WORLD_WIDTH) {
       // position.x = 0;
@@ -74,7 +79,7 @@ export const BounceSystem = singleEntitySystem(
 );
 
 export const AccelerationSystem = singleEntitySystem(
-  ["acceleration", "velocity"],
+  ["accelerationComponent", "velocityComponent"],
   (
     acceleration: AccelerationComponent,
     velocity: VelocityComponent,
@@ -85,7 +90,7 @@ export const AccelerationSystem = singleEntitySystem(
   }
 );
 export const ApplyForceSystem = singleEntitySystem(
-  ["mass", "acceleration", "force"],
+  ["massComponent", "accelerationComponent", "forceComponent"],
   (
     mass: MassComponent,
     acceleration: AccelerationComponent,
@@ -98,7 +103,7 @@ export const ApplyForceSystem = singleEntitySystem(
 );
 
 export const ForceResetSystem = singleEntitySystem(
-  ["force"],
+  ["forceComponent"],
   (force: ForceComponent) => {
     force.x = 0;
     force.y = 0;
@@ -109,60 +114,74 @@ const GRAVITY_CONST = 6.67e-5;
 export function GravityForceSystem(world: World) {
   for (let i = 0; i < world.entities.length - 1; i++) {
     const e1 = world.entities[i];
-    if (!e1.mass || !e1.position || !e1.force) continue;
+    const e1Position = world.components.positionComponent.get(e1);
+    const e1Force = world.components.forceComponent.get(e1);
+    const e1Mass = world.components.massComponent.get(e1);
+    if (!e1Mass || !e1Position || !e1Force) continue;
 
     for (let j = i + 1; j < world.entities.length; j++) {
       const e2 = world.entities[j];
-      if (!e2.mass || !e2.position || !e2.force) continue;
+      const e2Position = world.components.positionComponent.get(e2);
+      const e2Force = world.components.forceComponent.get(e2);
+      const e2Mass = world.components.massComponent.get(e2);
 
-      const dx = e2.position.x - e1.position.x;
-      const dy = e2.position.y - e1.position.y;
+      if (!e2Mass || !e2Position || !e2Force) continue;
+
+      const dx = e2Position.x - e1Position.x;
+      const dy = e2Position.y - e1Position.y;
 
       const r2 = dx * dx + dy * dy;
       if (r2 === 0) continue;
       const r = r2 ** 0.5;
 
-      const force = (GRAVITY_CONST * e1.mass.value * e2.mass.value) / r2;
+      const force = (GRAVITY_CONST * e1Mass.value * e2Mass.value) / r2;
 
       const fx = force * (dx / r);
       const fy = force * (dy / r);
 
-      e1.force.x += fx;
-      e1.force.y += fy;
+      e1Force.x += fx;
+      e1Force.y += fy;
 
-      e2.force.x -= fx;
-      e2.force.y -= fy;
+      e2Force.x -= fx;
+      e2Force.y -= fy;
     }
   }
 }
 
-export const JointSystem = singleEntitySystem(
-  ["joint"],
-  ({ entity1, entity2, originalDistance, k }: JointComponent) => {
-    if (!entity1.position || !entity1.force) return;
-    if (!entity2.position || !entity2.force) return;
-    const dx = entity2.position.x - entity1.position.x;
-    const dy = entity2.position.y - entity1.position.y;
+export const JointSystem = (world: World) => {
+  for (const entity of world.entities) {
+    const joint = world.components.jointComponent.get(entity);
+    if (joint) {
+      const { entity1, entity2, originalDistance, k } = joint;
+      const entity1Position = world.components.positionComponent.get(entity1);
+      const entity1Force = world.components.forceComponent.get(entity1);
+      if (!entity1Position || !entity1Force) return;
+      const entity2Position = world.components.positionComponent.get(entity2);
+      const entity2Force = world.components.forceComponent.get(entity2);
+      if (!entity2Position || !entity2Force) return;
+      const dx = entity2Position.x - entity1Position.x;
+      const dy = entity2Position.y - entity1Position.y;
 
-    const r2 = dx * dx + dy * dy;
-    const originalDistance2 = originalDistance * originalDistance;
-    if (r2 === originalDistance2) return;
+      const r2 = dx * dx + dy * dy;
+      const originalDistance2 = originalDistance * originalDistance;
+      if (r2 === originalDistance2) return;
 
-    const r = Math.sqrt(r2);
-    const f = -(r - originalDistance2) * k;
+      const r = Math.sqrt(r2);
+      const f = -(r - originalDistance2) * k;
 
-    const fx = (dx / r) * f;
-    const fy = (dy / r) * f;
+      const fx = (dx / r) * f;
+      const fy = (dy / r) * f;
 
-    entity1.force.x += fx;
-    entity1.force.y += fy;
+      entity1Force.x += fx;
+      entity1Force.y += fy;
 
-    entity2.force.x -= fx;
-    entity2.force.y -= fy;
+      entity2Force.x -= fx;
+      entity2Force.y -= fy;
+    }
   }
-);
+};
 
-function ConsoleRenderSystem(world: World) {
+export function ConsoleRenderSystem(world: World) {
   for (const entity of world.entities) {
     console.log(JSON.stringify(entity));
   }
@@ -170,40 +189,44 @@ function ConsoleRenderSystem(world: World) {
 
 export const PhysicsRenderSystem = (world: World) => {
   for (const entity of world.entities) {
-    if (entity.position) {
-      entity.canvasRender = {
+    const position = world.components.positionComponent.get(entity);
+    if (position) {
+      const canvasRender: CanvasRenderComponent = {
         kind: "rect",
         strokeStyle: "red",
-        x: entity.position.x,
-        y: entity.position.y,
+        x: position.x,
+        y: position.y,
         width: 10,
         height: 10,
       };
-      if (entity.userControl) entity.canvasRender.strokeStyle = "green";
+      const userControl = world.components.userControlComponent.get(entity);
+      if (userControl) canvasRender.strokeStyle = "green";
 
-      if (entity.mass) {
-        const size = entity.mass.value ** (1 / 3);
-        entity.canvasRender.width = 2 * size;
-        entity.canvasRender.height = 2 * size;
+      const mass = world.components.massComponent.get(entity);
+      if (mass) {
+        const size = mass.value ** (1 / 3);
+        canvasRender.width = 2 * size;
+        canvasRender.height = 2 * size;
 
-        entity.canvasRender.x -= size;
-        entity.canvasRender.y -= size;
+        canvasRender.x -= size;
+        canvasRender.y -= size;
       }
+      world.components.canvasRenderComponent.set(entity, canvasRender);
     }
-    if (entity.joint) {
-      const joint = entity.joint;
-      const position1 = joint.entity1.position;
+    const joint = world.components.jointComponent.get(entity);
+    if (joint) {
+      const position1 = world.components.positionComponent.get(joint.entity1);
       if (!position1) continue;
-      const position2 = joint.entity2.position;
+      const position2 = world.components.positionComponent.get(joint.entity2);
       if (!position2) continue;
-      entity.canvasRender = {
+      world.components.canvasRenderComponent.set(entity, {
         kind: "line",
         strokeStyle: "blue",
         x1: position1.x,
         y1: position1.y,
         x2: position2.x,
         y2: position2.y,
-      };
+      });
     }
   }
 };
@@ -217,7 +240,7 @@ export function CanvasCleanSystem() {
 }
 
 export const CanvasRenderSystem = singleEntitySystem(
-  ["canvasRender"],
+  ["canvasRenderComponent"],
   (canvasRender: CanvasRenderComponent) => {
     if (!canvasCtx) return;
 
@@ -285,7 +308,7 @@ document.addEventListener("keyup", (event) => {
 });
 
 export const UserControlSystem = singleEntitySystem(
-  ["userControl", "velocity"],
+  ["userControlComponent", "velocityComponent"],
   (_userControl: UserControlledComponent, velocity: VelocityComponent) => {
     const vx = 0.02;
     const vy = 0.02;

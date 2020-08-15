@@ -42,12 +42,13 @@ export type CanvasRenderComponent = {
   y2: number;
 };
 export interface Entity {
-  position?: PositionComponent;
-  velocity?: VelocityComponent;
-  acceleration?: AccelerationComponent;
-  force?: ForceComponent;
-  mass?: MassComponent;
-  canvasRender?: CanvasRenderComponent;
-  joint?: JointComponent;
-  userControl?: UserControlledComponent;
+  // x:null
+  // position?: PositionComponent;
+  // velocity?: VelocityComponent;
+  // acceleration?: AccelerationComponent;
+  // force?: ForceComponent;
+  // mass?: MassComponent;
+  // canvasRender?: CanvasRenderComponent;
+  // joint?: JointComponent;
+  // userControl?: UserControlledComponent;
 }

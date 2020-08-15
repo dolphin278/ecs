@@ -1,6 +1,16 @@
 console.log("Hello, world");
 
-import { Entity } from "./components";
+import {
+  Entity,
+  PositionComponent,
+  VelocityComponent,
+  AccelerationComponent,
+  ForceComponent,
+  MassComponent,
+  CanvasRenderComponent,
+  JointComponent,
+  UserControlledComponent,
+} from "./components";
 import {
   UserControlSystem,
   MovementSystem,
@@ -16,35 +26,62 @@ import {
 } from "./systems";
 import { init } from "./init";
 
-export class World {
-  constructor(public entities: Entity[], public currentTime: number = 0) {}
+// type ComponentsFromEntity<T> = {[K in keyof T]: Map<Entity, T[K]>}
 
-  tick(delta: number) {
-    UserControlSystem(this, delta);
-    MovementSystem(this, delta);
-    BounceSystem(this, delta);
-    AccelerationSystem(this, delta);
-    ForceResetSystem(this, delta);
-    GravityForceSystem(this);
-    JointSystem(this, delta);
-    ApplyForceSystem(this, delta);
-    // ConsoleRenderSystem(this);
-    PhysicsRenderSystem(this);
-    CanvasCleanSystem();
-    CanvasRenderSystem(this, delta);
-  }
+export interface World {
+  entities: Entity[];
+  components: {
+    positionComponent: Map<Entity, PositionComponent>;
+    velocityComponent: Map<Entity, VelocityComponent>;
+    accelerationComponent: Map<Entity, AccelerationComponent>;
+    forceComponent: Map<Entity, ForceComponent>;
+    massComponent: Map<Entity, MassComponent>;
+    canvasRenderComponent: Map<Entity, CanvasRenderComponent>;
+    jointComponent: Map<Entity, JointComponent>;
+    userControlComponent: Map<Entity, UserControlledComponent>;
+  };
+  currentTime: number;
 }
 
-export const entities = init([]);
+function tick(world: World, delta: number) {
+  UserControlSystem(world, delta);
+  MovementSystem(world, delta);
+  BounceSystem(world, delta);
+  AccelerationSystem(world, delta);
+  ForceResetSystem(world, delta);
+  GravityForceSystem(world);
+  JointSystem(world);
+  ApplyForceSystem(world, delta);
+  // ConsoleRenderSystem(world);
+  PhysicsRenderSystem(world);
+  CanvasCleanSystem();
+  CanvasRenderSystem(world, delta);
+}
 
-const world = new World(entities);
+const world: World = {
+  entities: [],
+  currentTime: 0,
+  components: {
+    positionComponent: new Map(),
+    velocityComponent: new Map(),
+    accelerationComponent: new Map(),
+    forceComponent: new Map(),
+    massComponent: new Map(),
+    canvasRenderComponent: new Map(),
+    jointComponent: new Map(),
+    userControlComponent: new Map()
+  },
+};
+
+init(world);
+
 let t0 = performance.now();
 
 const render = (currentTime: number) => {
   const delta = currentTime - t0;
   t0 += delta;
   console.log("tick");
-  world.tick(delta);
+  tick(world, delta);
   requestAnimationFrame(render);
 };
 
