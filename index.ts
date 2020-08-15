@@ -10,8 +10,9 @@ import {
   GravityForceSystem,
   JointSystem,
   ApplyForceSystem,
-  PhysicsRender,
+  PhysicsRenderSystem,
   CanvasRenderSystem,
+  CanvasCleanSystem,
 } from "./systems";
 import { init } from "./init";
 
@@ -19,17 +20,18 @@ export class World {
   constructor(public entities: Entity[], public currentTime: number = 0) {}
 
   tick(delta: number) {
-    UserControlSystem(this);
+    UserControlSystem(this, delta);
     MovementSystem(this, delta);
-    BounceSystem(this);
+    BounceSystem(this, delta);
     AccelerationSystem(this, delta);
-    ForceResetSystem(this);
+    ForceResetSystem(this, delta);
     GravityForceSystem(this);
-    JointSystem(this);
-    ApplyForceSystem(this);
+    JointSystem(this, delta);
+    ApplyForceSystem(this, delta);
     // ConsoleRenderSystem(this);
-    PhysicsRender(this);
-    CanvasRenderSystem(this);
+    PhysicsRenderSystem(this);
+    CanvasCleanSystem();
+    CanvasRenderSystem(this, delta);
   }
 }
 
