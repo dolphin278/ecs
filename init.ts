@@ -15,7 +15,7 @@ export function init({
   },
 }: World) {
   const maxVelocity = 0.05;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 1000; i++) {
     const position = {
       x: (Math.random() * WORLD_WIDTH) | 0,
       y: (Math.random() * WORLD_HEIGHT) | 0,
