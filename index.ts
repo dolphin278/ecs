@@ -31,6 +31,8 @@ interface JointComponent {
   originalDistance: number;
 }
 
+interface UserControlledComponent {}
+
 type CanvasRenderComponent =
   | {
       kind: "rect";
@@ -57,6 +59,7 @@ interface Entity {
   mass?: MassComponent;
   canvasRender?: CanvasRenderComponent;
   joint?: JointComponent;
+  userControl?: UserControlledComponent;
 }
 
 const WORLD_WIDTH = 1000;
@@ -76,26 +79,29 @@ function BounceSystem(world: World) {
     if (entity.position && entity.velocity) {
       if (entity.position.x > WORLD_WIDTH) {
         // entity.position.x = 0;
-        // entity.velocity.x *= 0.1;
+        entity.velocity.x *= -1;
         entity.position.x = WORLD_WIDTH;
-        entity.velocity.x *= -0;
+        entity.velocity.x *= -0.2;
       } else if (entity.position.x < 0) {
-        entity.velocity.x *= -0;
+        // entity.velocity.x *= -0;
         entity.position.x = 0;
         // entity.position.x = WORLD_WIDTH;
+        entity.velocity.x *= -0.2;
         // entity.velocity.x *= 0.1;
       }
 
       if (entity.position.y > WORLD_HEIGHT) {
-        entity.velocity.y *= 0;
+        // entity.velocity.y *= 0;
         entity.position.y = WORLD_HEIGHT;
         // entity.velocity.y *= 0.1;
+        entity.velocity.y *= -0.2;
         // entity.position.y = 0;
       } else if (entity.position.y < 0) {
-        entity.velocity.y *= 0;
+        // entity.velocity.y *= 0;
         entity.position.y = 0;
-        // entity.velocity.y *= 0.1;
+        entity.velocity.y *= -0.2;
         // entity.position.y = WORLD_HEIGHT;
+        // entity.velocity.y *= 0.1;
       }
     }
   }
@@ -210,6 +216,9 @@ function PhysicsRender(world: World) {
         width: 10,
         height: 10,
       };
+      if (entity.userControl) 
+        entity.canvasRender.strokeStyle = 'green'
+      
       if (entity.mass) {
         const size = entity.mass.value ** (1 / 3);
         entity.canvasRender.width = 2 * size;
@@ -270,18 +279,56 @@ function CanvasRenderSystem(world: World) {
   }
 }
 
+const keyState = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+}
+
+document.addEventListener('keydown', (event) => {
+  switch (event.keyCode) {
+    case 37: keyState.left = true; break;
+    case 38: keyState.up = true; break;
+    case 39: keyState.right = true; break;
+    case 40: keyState.down = true; break;
+  }
+})
+document.addEventListener('keyup', (event) => {
+  switch (event.keyCode) {
+    case 37: keyState.left = false; break;
+    case 38: keyState.up = false; break;
+    case 39: keyState.right = false; break;
+    case 40: keyState.down = false; break;
+  }
+})
+
+function UserControlSystem(world: World) {
+  const vx = 0.02;
+  const vy = 0.02;
+  for (const entity of world.entities) {
+    if (entity.userControl && entity.velocity) {
+      if (keyState.right)  entity.velocity.x += vx
+      if (keyState.left)  entity.velocity.x -= vx
+      if (keyState.up)  entity.velocity.y -= vy
+      if (keyState.down)  entity.velocity.y += vy
+    }
+  }
+}
+
 class World {
   constructor(public entities: Entity[], public currentTime: number = 0) {}
 
   tick(delta: number) {
+    UserControlSystem(this);
     MovementSystem(this, delta);
     BounceSystem(this);
     AccelerationSystem(this, delta);
     ForceResetSystem(this);
-    // GravityForceSystem(this);
+    GravityForceSystem(this);
     JointSystem(this);
     ApplyForceSystem(this);
-    ConsoleRenderSystem(this);
+    // ConsoleRenderSystem(this);
     PhysicsRender(this);
     CanvasRenderSystem(this);
   }
@@ -324,6 +371,7 @@ for (let i = 0; i < 40; i++) {
 // Star
 for (let i = 0; i < 2; i++) {
   entities.push({
+    userControl: {},
     position: {
       x: (Math.random() * WORLD_WIDTH) | 0,
       y: (Math.random() * WORLD_HEIGHT) | 0,
@@ -341,11 +389,12 @@ for (let i = 0; i < 2; i++) {
       y: 0,
     },
     mass: {
-      value: 100000,
+      value: 1000,
     },
   });
 }
 entities.push({
+  userControl: {},
   position: {
     x: (Math.random() * WORLD_WIDTH) | 0,
     y: (Math.random() * WORLD_HEIGHT) | 0,
@@ -363,7 +412,7 @@ entities.push({
     y: 0,
   },
   mass: {
-    value: 100000,
+    value: 1000,
   },
 });
 
@@ -385,6 +434,26 @@ entities.push({
   },
 });
 
+// entities.push({
+//   position: {
+//     x: 50,
+//     y: 50
+//   },
+//   canvasRender: {
+//     kind: 'rect',
+//     strokeStyle: 'green',
+//     x: 0, 
+//     y: 0,
+//     width: 0,
+//     height: 0
+//   },
+//   velocity: {
+//     x: 0,
+//     y: 0
+//   },
+//   userControl: {}
+// })
+
 const world = new World(entities);
 let t0 = performance.now();
 
@@ -397,3 +466,4 @@ const render = (currentTime: number) => {
 };
 
 requestAnimationFrame(render);
+
