@@ -110,7 +110,7 @@ export const ForceResetSystem = singleEntitySystem(
   }
 );
 
-const GRAVITY_CONST = 6.67e-5;
+const GRAVITY_CONST = 6.67e-11;
 // export function GravityForceSystem(world: World) {
 //   for (let i = 0; i < world.entities.length - 1; i++) {
 //     const e1 = world.entities[i];
