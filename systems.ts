@@ -111,33 +111,77 @@ export const ForceResetSystem = singleEntitySystem(
 );
 
 const GRAVITY_CONST = 6.67e-5;
+// export function GravityForceSystem(world: World) {
+//   for (let i = 0; i < world.entities.length - 1; i++) {
+//     const e1 = world.entities[i];
+//     const e1Position = world.components.positionComponent.get(e1);
+//     if (e1Position === void 0) continue;
+//     const e1Force = world.components.forceComponent.get(e1);
+//     if (e1Force === void 0) continue;
+//     const e1Mass = world.components.massComponent.get(e1);
+//     if (e1Mass === void 0) continue;
+
+//     for (let j = i + 1; j < world.entities.length; j++) {
+//       const e2 = world.entities[j];
+
+//       const e2Position = world.components.positionComponent.get(e2);
+//       if (e2Position === void 0) continue;
+//       const e2Force = world.components.forceComponent.get(e2);
+//       if (e2Force === void 0) continue;
+//       const e2Mass = world.components.massComponent.get(e2);
+//       if (e2Mass === void 0) continue;
+
+//       const dx = e2Position.x - e1Position.x;
+//       const dy = e2Position.y - e1Position.y;
+
+//       const r2 = dx * dx + dy * dy;
+//       if (r2 === 0) continue;
+//       const r = Math.sqrt(r2);
+
+//       const force = (GRAVITY_CONST * e1Mass.value * e2Mass.value) / r2;
+
+//       const fdr = force / r;
+//       const fx = fdr * dx;
+//       const fy = fdr * dy;
+
+//       e1Force.x += fx;
+//       e1Force.y += fy;
+
+//       e2Force.x -= fx;
+//       e2Force.y -= fy;
+//     }
+//   }
+// }
+
+const entities: Array<{mass: MassComponent, position: PositionComponent, force: ForceComponent}> = []
 export function GravityForceSystem(world: World) {
-  for (let i = 0; i < world.entities.length - 1; i++) {
-    const e1 = world.entities[i];
-    const e1Position = world.components.positionComponent.get(e1);
-    const e1Force = world.components.forceComponent.get(e1);
-    const e1Mass = world.components.massComponent.get(e1);
-    if (!e1Mass || !e1Position || !e1Force) continue;
+  
+  while (entities.length !== 0) entities.pop()
+  for (const {0: e, 1: mass} of world.components.massComponent) {
+    const force = world.components.forceComponent.get(e);
+    if (force === void 0) continue;
+    const position = world.components.positionComponent.get(e);
+    if (position === void 0) continue;
+    entities.push({force, mass, position});
+  }
 
-    for (let j = i + 1; j < world.entities.length; j++) {
-      const e2 = world.entities[j];
-      const e2Position = world.components.positionComponent.get(e2);
-      const e2Force = world.components.forceComponent.get(e2);
-      const e2Mass = world.components.massComponent.get(e2);
-
-      if (!e2Mass || !e2Position || !e2Force) continue;
+  for (let i = 0; i < entities.length - 1; i++) {
+    const {mass: e1Mass, position: e1Position, force: e1Force} = entities[i];
+    for (let j = i + 1; j < entities.length; j++) {
+      const {mass: e2Mass, position: e2Position, force: e2Force} = entities[j];
 
       const dx = e2Position.x - e1Position.x;
       const dy = e2Position.y - e1Position.y;
 
       const r2 = dx * dx + dy * dy;
       if (r2 === 0) continue;
-      const r = r2 ** 0.5;
+      const r = Math.sqrt(r2);
 
       const force = (GRAVITY_CONST * e1Mass.value * e2Mass.value) / r2;
 
-      const fx = force * (dx / r);
-      const fy = force * (dy / r);
+      const fdr = force / r;
+      const fx = fdr * dx;
+      const fy = fdr * dy;
 
       e1Force.x += fx;
       e1Force.y += fy;
