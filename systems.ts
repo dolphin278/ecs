@@ -13,29 +13,50 @@ import {
   UserControlledComponent,
 } from "./components";
 
+type MapValue<T extends Map<any, any>> = T extends Map<any, infer U>
+  ? U
+  : never;
+
 // TODO: Add proper types
+// const args: Array<MapValue<World['components'][keyof World['components']]>> = []
 export function singleEntitySystem(
-  components: Array<keyof Entity | keyof World["components"]>,
+  components: Array<keyof World["components"]>,
   fn: (...args: any[]) => void
 ) {
-  return function (world: World, delta: number) {
-    entityCycle: for (const entity of world.entities) {
-      const args = [];
-      for (const component of components) {
-        let componentData;
-        if (Reflect.has(world.components, component)) {
-          // @ts-ignore
-          componentData = world.components[component].get(entity);
-        } else componentData = Reflect.get(entity, component);
+  if (components.length === 0)
+    throw new Error("List of components can not be empty");
 
-        if (!componentData) continue entityCycle;
+  return function componentQuery(world: World, delta: number) {
+    const firstComponent = world.components[components[0]];
+    entityCycle: for (const { 0: entity, 1: value } of firstComponent) {
+      const args = [value];
+      for (let i = 1; i < components.length; i++) {
+        const component = world.components[components[i]];
+        const componentData = component.get(entity);
+        if (componentData === void 0) continue entityCycle;
         args.push(componentData);
       }
-
       args.push(delta);
       Reflect.apply(fn, null, args);
     }
   };
+
+  // const componentQueryFn = componentQuery(components).bind(null, fn);
+  // return function (world: World, delta: number) {
+  // const iterator = (...args: any[]) => fn(...args, delta);
+  // return componentQueryFn(world, iterator);
+  // entityCycle: for (const entity of world.entities) {
+  //   const args = [];
+  //   for (const component of components) {
+  //     const componentData = world.components[component].get(entity);
+  //     if (!componentData) continue entityCycle;
+  //     args.push(componentData);
+  //   }
+
+  //   args.push(delta);
+  //   Reflect.apply(fn, null, args);
+  // }
+  // };
 }
 
 export const MovementSystem = singleEntitySystem(
@@ -153,22 +174,27 @@ const GRAVITY_CONST = 6.67e-11;
 //   }
 // }
 
-const entities: Array<{mass: MassComponent, position: PositionComponent, force: ForceComponent}> = []
+const entities: Array<{
+  mass: MassComponent;
+  position: PositionComponent;
+  force: ForceComponent;
+}> = [];
 export function GravityForceSystem(world: World) {
-  
-  while (entities.length !== 0) entities.pop()
-  for (const {0: e, 1: mass} of world.components.massComponent) {
+  while (entities.length !== 0) entities.pop();
+  for (const { 0: e, 1: mass } of world.components.massComponent) {
     const force = world.components.forceComponent.get(e);
     if (force === void 0) continue;
     const position = world.components.positionComponent.get(e);
     if (position === void 0) continue;
-    entities.push({force, mass, position});
+    entities.push({ force, mass, position });
   }
 
   for (let i = 0; i < entities.length - 1; i++) {
-    const {mass: e1Mass, position: e1Position, force: e1Force} = entities[i];
+    const { mass: e1Mass, position: e1Position, force: e1Force } = entities[i];
     for (let j = i + 1; j < entities.length; j++) {
-      const {mass: e2Mass, position: e2Position, force: e2Force} = entities[j];
+      const { mass: e2Mass, position: e2Position, force: e2Force } = entities[
+        j
+      ];
 
       const dx = e2Position.x - e1Position.x;
       const dy = e2Position.y - e1Position.y;
@@ -191,6 +217,18 @@ export function GravityForceSystem(world: World) {
     }
   }
 }
+
+export const FrictionSystem = singleEntitySystem(
+  ["velocityComponent", "forceComponent"],
+  function friction(
+    velocity: VelocityComponent,
+    force: ForceComponent,
+    _delta: number
+  ) {
+    force.x -= velocity.x * 0.5;
+    force.y -= velocity.y * 0.5;
+  }
+);
 
 export const JointSystem = (world: World) => {
   for (const entity of world.entities) {

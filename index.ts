@@ -23,6 +23,7 @@ import {
   PhysicsRenderSystem,
   CanvasRenderSystem,
   CanvasCleanSystem,
+  FrictionSystem,
 } from "./systems";
 import { init } from "./init";
 
@@ -51,6 +52,7 @@ function tick(world: World, delta: number) {
   ForceResetSystem(world, delta);
   GravityForceSystem(world);
   JointSystem(world);
+  FrictionSystem(world, delta);
   ApplyForceSystem(world, delta);
   // ConsoleRenderSystem(world);
   PhysicsRenderSystem(world);

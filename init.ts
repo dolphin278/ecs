@@ -11,7 +11,7 @@ export function init({
     forceComponent,
     massComponent,
     jointComponent,
-    userControlComponent
+    userControlComponent,
   },
 }: World) {
   const maxVelocity = 0.05;
@@ -32,23 +32,7 @@ export function init({
       x: 0,
       y: 0,
     };
-    const entity: Entity = {
-      // position,
-      // velocity: velocity,
-      // acceleration: acceleration,
-      // force: force,
-      // mass: {
-      //   value: 10,
-      // },
-      // canvasRender: {
-      //   kind: "rect",
-      //   strokeStyle: "red",
-      //   x: 10,
-      //   y: 10,
-      //   width: 10,
-      //   height: 10,
-      // },
-    };
+    const entity: Entity = {};
     positionComponent.set(entity, position);
     velocityComponent.set(entity, velocity);
     accelerationComponent.set(entity, acceleration);
@@ -59,7 +43,9 @@ export function init({
     entities.push(entity);
   }
 
-  // Star
+  // Stars
+
+  const stars = [];
   for (let i = 0; i < 2; i++) {
     const position = {
       x: (Math.random() * WORLD_WIDTH) | 0,
@@ -77,18 +63,10 @@ export function init({
       x: 0,
       y: 0,
     };
-    const entity: Entity = {
-      // userControl: {},
-      // position,
-      // acceleration: acceleration,
-      // velocity: velocity,
-      // force: force,
-      // mass: {
-      //   value: 1000,
-      // },
-    };
+    const entity: Entity = {};
     entities.push(entity);
-    userControlComponent.set(entity, true)
+    stars.push(entity);
+    userControlComponent.set(entity, true);
     positionComponent.set(entity, position);
     velocityComponent.set(entity, velocity);
     forceComponent.set(entity, force);
@@ -98,6 +76,7 @@ export function init({
     });
   }
 
+  const fixedStar = {};
   {
     const position = {
       x: (Math.random() * WORLD_WIDTH) | 0,
@@ -111,13 +90,7 @@ export function init({
       x: 0,
       y: 0,
     };
-    const entity: Entity = {
-      // userControl: {},
-      // position,
-      // acceleration: acceleration,
-      // force: force,
-      // mass: ,
-    };
+    const entity: Entity = fixedStar;
     userControlComponent.set(entity, userControlComponent);
     positionComponent.set(entity, position);
     accelerationComponent.set(entity, acceleration);
@@ -131,9 +104,9 @@ export function init({
   {
     const entity = {};
     jointComponent.set(entity, {
-      entity1: entities[entities.length - 2],
-      entity2: entities[entities.length - 1],
-      k: 1e-4,
+      entity1: fixedStar,
+      entity2: stars[0],
+      k: 1e-2,
       originalDistance: 100,
     });
     entities.push(entity);
@@ -142,9 +115,20 @@ export function init({
   {
     const entity = {};
     jointComponent.set(entity, {
-      entity1: entities[entities.length - 4],
-      entity2: entities[entities.length - 3],
-      k: 1e-4,
+      entity1: stars[0],
+      entity2: stars[1],
+      k: 5e-2,
+      originalDistance: 100,
+    });
+    entities.push(entity);
+  }
+
+  {
+    const entity = {};
+    jointComponent.set(entity, {
+      entity1: fixedStar,
+      entity2: stars[1],
+      k: 5e-2,
       originalDistance: 100,
     });
     entities.push(entity);
