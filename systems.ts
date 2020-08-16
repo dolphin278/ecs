@@ -211,7 +211,7 @@ export const JointSystem = (world: World) => {
       if (r2 === originalDistance2) return;
 
       const r = Math.sqrt(r2);
-      const f = -(r - originalDistance2) * k;
+      const f = (r - originalDistance) * k;
 
       const fx = (dx / r) * f;
       const fy = (dy / r) * f;
