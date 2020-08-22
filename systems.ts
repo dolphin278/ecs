@@ -6,6 +6,7 @@ import {
   PositionComponent,
   UserControlledComponent,
   VelocityComponent,
+  CanvasTextComponent,
 } from "./components";
 import { World } from "./index";
 export const WORLD_WIDTH = 1000;
@@ -279,6 +280,17 @@ export const CanvasRenderSystem = singleEntitySystem(
   }
 );
 
+export const CanvasTextRenderSystem = singleEntitySystem(
+  ["canvasTextComponent"] as const,
+  function canvasTextRenderSystem(delta, canvasText) {
+    if (!canvasCtx) return;
+    const oldFont = canvasCtx.font;
+    canvasCtx.font = canvasText.font;
+    canvasCtx.strokeText(canvasText.text, canvasText.x, canvasText.y);
+    canvasCtx.font = oldFont;
+  }
+);
+
 const keyState = {
   up: false,
   down: false,
@@ -320,11 +332,7 @@ document.addEventListener("keyup", (event) => {
 
 export const UserControlSystem = singleEntitySystem(
   ["userControlComponent", "velocityComponent"] as const,
-  (
-    delta: number,
-    _userControl: UserControlledComponent,
-    velocity: VelocityComponent
-  ) => {
+  (_, userControl, velocity) => {
     const vx = 0.02;
     const vy = 0.02;
 
@@ -334,3 +342,12 @@ export const UserControlSystem = singleEntitySystem(
     if (keyState.down) velocity.y += vy;
   }
 );
+
+export const DisplayVelocitySystem = singleEntitySystem(
+  ['velocityComponent', 'positionComponent', 'canvasTextComponent'] as const,
+  (_, velocity, position, canvasText) => {
+    canvasText.text = `${velocity.x} ${velocity.y}`;
+    canvasText.x = position.x
+    canvasText.y = position.y
+  }
+) 

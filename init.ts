@@ -12,6 +12,7 @@ export function init(world: World) {
       massComponent,
       jointComponent,
       userControlComponent,
+      canvasTextComponent
     },
   } = world;
   const maxVelocity = 0.05;
@@ -44,6 +45,12 @@ export function init(world: World) {
     const entity = createEntity(world);
     stars.push(entity)
     userControlComponent.set(entity, true);
+    canvasTextComponent.set(entity, {
+      text: '',
+      font: '10px Times New Roman',
+      x: 0,
+      y: 0
+    })
     positionComponent.set(entity, {
       x: (Math.random() * WORLD_WIDTH) | 0,
       y: (Math.random() * WORLD_HEIGHT) | 0,
@@ -93,6 +100,16 @@ export function init(world: World) {
       k: 1e-3,
       originalDistance: 100,
     });
+  }
+
+  {
+    const entity = createEntity(world);
+    canvasTextComponent.set(entity, {
+      text: 'Hello, world',
+      font: '100px Times New Roman',
+      x: 100,
+      y: 100
+    })
   }
 
   return entities;

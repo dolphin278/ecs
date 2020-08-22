@@ -43,4 +43,11 @@ export type CanvasRenderComponent =
       y2: number;
     };
 
+export interface CanvasTextComponent {
+  text: string
+  font: string
+  x: number
+  y: number
+}
+
 export type Entity = number;

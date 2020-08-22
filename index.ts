@@ -10,6 +10,7 @@ import {
   CanvasRenderComponent,
   JointComponent,
   UserControlledComponent,
+  CanvasTextComponent,
 } from "./components";
 import {
   UserControlSystem,
@@ -23,6 +24,8 @@ import {
   PhysicsRenderSystem,
   CanvasRenderSystem,
   CanvasCleanSystem,
+  CanvasTextRenderSystem,
+  DisplayVelocitySystem,
 } from "./systems";
 import { init } from "./init";
 
@@ -51,6 +54,7 @@ export interface World {
     canvasRenderComponent: Map<Entity, CanvasRenderComponent>;
     jointComponent: Map<Entity, JointComponent>;
     userControlComponent: Map<Entity, UserControlledComponent>;
+    canvasTextComponent: Map<Entity, CanvasTextComponent>;
   };
 }
 
@@ -64,9 +68,13 @@ function tick(world: World, delta: number) {
   JointSystem(world);
   ApplyForceSystem(world, delta);
   // ConsoleRenderSystem(world);
+
   PhysicsRenderSystem(world);
+  DisplayVelocitySystem(world, delta);
+  
   CanvasCleanSystem();
   CanvasRenderSystem(world, delta);
+  CanvasTextRenderSystem(world, delta);
 }
 
 const world: World = {
@@ -81,6 +89,7 @@ const world: World = {
     canvasRenderComponent: new Map(),
     jointComponent: new Map(),
     userControlComponent: new Map(),
+    canvasTextComponent: new Map()
   },
 };
 
