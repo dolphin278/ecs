@@ -112,20 +112,25 @@ export const ForceResetSystem = singleEntitySystem(
 
 const GRAVITY_CONST = 6.67e-5;
 export function GravityForceSystem(world: World) {
-  for (let i = 0; i < world.entities.length - 1; i++) {
-    const e1 = world.entities[i];
-    const e1Position = world.components.positionComponent.get(e1);
-    const e1Force = world.components.forceComponent.get(e1);
-    const e1Mass = world.components.massComponent.get(e1);
-    if (!e1Mass || !e1Position || !e1Force) continue;
+  const entities: Array<{
+    mass: MassComponent;
+    force: ForceComponent;
+    position: PositionComponent;
+  }> = [];
 
-    for (let j = i + 1; j < world.entities.length; j++) {
-      const e2 = world.entities[j];
-      const e2Position = world.components.positionComponent.get(e2);
-      const e2Force = world.components.forceComponent.get(e2);
-      const e2Mass = world.components.massComponent.get(e2);
+  for (const [enity, mass] of world.components.massComponent) {
+    const force = world.components.forceComponent.get(enity);
+    if (force === void 0) continue;
+    const position = world.components.positionComponent.get(enity);
+    if (position === void 0) continue;
+    entities.push({ mass, force, position });
+  }
 
-      if (!e2Mass || !e2Position || !e2Force) continue;
+  for (let i = 0; i < entities.length - 1; i++) {
+    const { position: e1Position, force: e1Force, mass: e1Mass } = entities[i];
+
+    for (let j = i + 1; j < entities.length; j++) {
+      const { position: e2Position, force: e2Force, mass: e2Mass } = entities[j];
 
       const dx = e2Position.x - e1Position.x;
       const dy = e2Position.y - e1Position.y;
