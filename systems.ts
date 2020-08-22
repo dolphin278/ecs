@@ -24,7 +24,6 @@ type SystemHandler<T extends ReadonlyArray<keyof World["components"]>> = (
   ...args: ComponentQuery<T>
 ) => void;
 
-// TODO: Add proper types
 export function singleEntitySystem<
   T extends ReadonlyArray<keyof World["components"]>
 >(components: T, fn: SystemHandler<T>) {
@@ -179,7 +178,7 @@ export const JointSystem = (world: World) => {
       if (r2 === originalDistance2) return;
 
       const r = Math.sqrt(r2);
-      const f = -(r - originalDistance2) * k;
+      const f = -(originalDistance - r) * k;
 
       const fx = (dx / r) * f;
       const fy = (dy / r) * f;

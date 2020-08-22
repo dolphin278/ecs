@@ -1,153 +1,98 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "./systems";
-import { World } from "./index";
-import { Entity } from "./components";
+import { World, createEntity } from "./index";
 
-export function init({
-  entities,
-  components: {
-    positionComponent,
-    velocityComponent,
-    accelerationComponent,
-    forceComponent,
-    massComponent,
-    jointComponent,
-    userControlComponent
-  },
-}: World) {
+export function init(world: World) {
+  const {
+    entities,
+    components: {
+      positionComponent,
+      velocityComponent,
+      accelerationComponent,
+      forceComponent,
+      massComponent,
+      jointComponent,
+      userControlComponent,
+    },
+  } = world;
   const maxVelocity = 0.05;
   for (let i = 0; i < 1000; i++) {
-    const position = {
+    const entity = createEntity(world);
+    positionComponent.set(entity, {
       x: (Math.random() * WORLD_WIDTH) | 0,
       y: (Math.random() * WORLD_HEIGHT) | 0,
-    };
-    const velocity = {
+    });
+    velocityComponent.set(entity, {
       x: Math.random() * maxVelocity - maxVelocity / 2,
       y: Math.random() * maxVelocity - maxVelocity / 2,
-    };
-    const acceleration = {
+    });
+    accelerationComponent.set(entity, {
       x: 0,
       y: 0,
-    };
-    const force = {
+    });
+    forceComponent.set(entity, {
       x: 0,
       y: 0,
-    };
-    const entity: Entity = {
-      // position,
-      // velocity: velocity,
-      // acceleration: acceleration,
-      // force: force,
-      // mass: {
-      //   value: 10,
-      // },
-      // canvasRender: {
-      //   kind: "rect",
-      //   strokeStyle: "red",
-      //   x: 10,
-      //   y: 10,
-      //   width: 10,
-      //   height: 10,
-      // },
-    };
-    positionComponent.set(entity, position);
-    velocityComponent.set(entity, velocity);
-    accelerationComponent.set(entity, acceleration);
-    forceComponent.set(entity, force);
+    });
     massComponent.set(entity, {
       value: 10,
     });
-    entities.push(entity);
   }
 
   // Star
-  for (let i = 0; i < 2; i++) {
-    const position = {
+  const stars = []
+  for (let i = 0; i < 3; i++) {
+    const entity = createEntity(world);
+    stars.push(entity)
+    userControlComponent.set(entity, true);
+    positionComponent.set(entity, {
       x: (Math.random() * WORLD_WIDTH) | 0,
       y: (Math.random() * WORLD_HEIGHT) | 0,
-    };
-    const velocity = {
+    });
+    velocityComponent.set(entity, {
       x: 0,
       y: 0,
-    };
-    const acceleration = {
+    });
+    forceComponent.set(entity, {
       x: 0,
       y: 0,
-    };
-    const force = {
+    });
+    accelerationComponent.set(entity, {
       x: 0,
       y: 0,
-    };
-    const entity: Entity = {
-      // userControl: {},
-      // position,
-      // acceleration: acceleration,
-      // velocity: velocity,
-      // force: force,
-      // mass: {
-      //   value: 1000,
-      // },
-    };
-    entities.push(entity);
-    userControlComponent.set(entity, true)
-    positionComponent.set(entity, position);
-    velocityComponent.set(entity, velocity);
-    forceComponent.set(entity, force);
-    accelerationComponent.set(entity, acceleration);
+    });
     massComponent.set(entity, {
       value: 1000,
     });
   }
 
   {
-    const position = {
-      x: (Math.random() * WORLD_WIDTH) | 0,
-      y: (Math.random() * WORLD_HEIGHT) | 0,
-    };
-    const acceleration = {
-      x: 0,
-      y: 0,
-    };
-    const force = {
-      x: 0,
-      y: 0,
-    };
-    const entity: Entity = {
-      // userControl: {},
-      // position,
-      // acceleration: acceleration,
-      // force: force,
-      // mass: ,
-    };
-    userControlComponent.set(entity, userControlComponent);
-    positionComponent.set(entity, position);
-    accelerationComponent.set(entity, acceleration);
-    forceComponent.set(entity, force);
-    massComponent.set(entity, {
-      value: 1000,
+    const entity = createEntity(world);
+    jointComponent.set(entity, {
+      entity1: stars[0],
+      entity2: stars[1],
+      k: 1e-3,
+      originalDistance: 100,
     });
-    entities.push(entity);
   }
 
   {
-    const entity = {};
+    const entity = createEntity(world);
     jointComponent.set(entity, {
-      entity1: entities[entities.length - 2],
-      entity2: entities[entities.length - 1],
-      k: 1e-4,
+      entity1: stars[1],
+      entity2: stars[2],
+      k: 1e-3,
       originalDistance: 100,
     });
-    entities.push(entity);
   }
 
   {
-    const entity = {};
+    const entity = createEntity(world);
     jointComponent.set(entity, {
-      entity1: entities[entities.length - 4],
-      entity2: entities[entities.length - 3],
-      k: 1e-4,
+      entity1: stars[0],
+      entity2: stars[2],
+      k: 1e-3,
       originalDistance: 100,
     });
-    entities.push(entity);
   }
 
   return entities;

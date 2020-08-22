@@ -26,9 +26,21 @@ import {
 } from "./systems";
 import { init } from "./init";
 
-// type ComponentsFromEntity<T> = {[K in keyof T]: Map<Entity, T[K]>}
+export function createEntity(world: World): Entity {
+  const id = ++world.lastAssignedId;
+  world.entities.push(id);
+  return id;
+}
+
+export function removeEntity(world: World, entity: Entity) {
+  for (const key of Object.keys(world.components))
+    world.components[key as keyof World["components"]].delete(entity);
+  const position = world.entities.indexOf(entity);
+  if (position !== -1) world.entities.splice(position, 1);
+}
 
 export interface World {
+  lastAssignedId: number;
   entities: Entity[];
   components: {
     positionComponent: Map<Entity, PositionComponent>;
@@ -40,7 +52,6 @@ export interface World {
     jointComponent: Map<Entity, JointComponent>;
     userControlComponent: Map<Entity, UserControlledComponent>;
   };
-  currentTime: number;
 }
 
 function tick(world: World, delta: number) {
@@ -59,8 +70,8 @@ function tick(world: World, delta: number) {
 }
 
 const world: World = {
+  lastAssignedId: 0,
   entities: [],
-  currentTime: 0,
   components: {
     positionComponent: new Map(),
     velocityComponent: new Map(),
@@ -69,7 +80,7 @@ const world: World = {
     massComponent: new Map(),
     canvasRenderComponent: new Map(),
     jointComponent: new Map(),
-    userControlComponent: new Map()
+    userControlComponent: new Map(),
   },
 };
 
