@@ -14,27 +14,47 @@ export const WORLD_HEIGHT = 500;
 
 type MapValue<T> = T extends Map<any, infer U> ? U : never;
 
-type ComponentQuery<T extends ReadonlyArray<keyof World["components"]>> = {
+type ComponentQueryResult<
+  T extends ReadonlyArray<keyof World["components"]>
+> = {
   [K in keyof T]: T[K] extends keyof World["components"]
     ? MapValue<World["components"][T[K]]>
     : never;
 };
 
+type ComponentQueryContainers<
+  T extends ReadonlyArray<keyof World["components"]>
+> = {
+  [K in keyof T]: T[K] extends keyof World["components"]
+    ? World["components"][T[K]]
+    : never;
+};
+
 type SystemHandler<T extends ReadonlyArray<keyof World["components"]>> = (
   delta: number,
-  ...args: ComponentQuery<T>
+  ...args: ComponentQueryResult<T>
 ) => void;
 
 export function singleEntitySystem<
   T extends ReadonlyArray<keyof World["components"]>
->(components: T, fn: SystemHandler<T>) {
+>(requiredComponents: T, fn: SystemHandler<T>) {
   return function (world: World, delta: number) {
-    entityCycle: for (const entity of world.entities) {
-      const args: Array<any> = [delta];
-      for (const component of components) {
-        const componentData = world.components[component].get(entity);
-        if (!componentData) continue entityCycle;
-        args.push(componentData);
+    // TODO: Add proper type for components tuple
+    const components = [];
+    for (let i = 0; i < requiredComponents.length; i++)
+      components[i] = world.components[requiredComponents[i]];
+
+    for (const componentName of requiredComponents)
+      components.push(world.components[componentName]);
+
+    const firstComponent = components[0];
+    firstComponentCycle: for (const [entity, value] of firstComponent) {
+      const args: Array<any> = [delta, value];
+      for (let i = 1; i < components.length; i++) {
+        const component = components[i];
+        const componendData = component.get(entity);
+        if (componendData === void 0) continue firstComponentCycle;
+        args.push(componendData);
       }
       Reflect.apply(fn, null, args);
     }
@@ -344,10 +364,10 @@ export const UserControlSystem = singleEntitySystem(
 );
 
 export const DisplayVelocitySystem = singleEntitySystem(
-  ['velocityComponent', 'positionComponent', 'canvasTextComponent'] as const,
+  ["velocityComponent", "positionComponent", "canvasTextComponent"] as const,
   (_, velocity, position, canvasText) => {
     canvasText.text = `${velocity.x} ${velocity.y}`;
-    canvasText.x = position.x
-    canvasText.y = position.y
+    canvasText.x = position.x;
+    canvasText.y = position.y;
   }
-) 
+);

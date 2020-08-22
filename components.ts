@@ -44,10 +44,10 @@ export type CanvasRenderComponent =
     };
 
 export interface CanvasTextComponent {
-  text: string
-  font: string
-  x: number
-  y: number
+  text: string;
+  font: string;
+  x: number;
+  y: number;
 }
 
 export type Entity = number;

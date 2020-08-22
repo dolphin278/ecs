@@ -71,7 +71,7 @@ function tick(world: World, delta: number) {
 
   PhysicsRenderSystem(world);
   DisplayVelocitySystem(world, delta);
-  
+
   CanvasCleanSystem();
   CanvasRenderSystem(world, delta);
   CanvasTextRenderSystem(world, delta);
@@ -89,7 +89,7 @@ const world: World = {
     canvasRenderComponent: new Map(),
     jointComponent: new Map(),
     userControlComponent: new Map(),
-    canvasTextComponent: new Map()
+    canvasTextComponent: new Map(),
   },
 };
 
