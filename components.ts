@@ -23,32 +23,23 @@ export interface JointComponent {
   k: number;
   originalDistance: number;
 }
-export interface UserControlledComponent { }
+export interface UserControlledComponent {}
 
-export type CanvasRenderComponent = {
-  kind: "rect";
-  strokeStyle: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-} |
-{
-  kind: "line";
-  strokeStyle: string;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-};
-export interface Entity {
-  // x:null
-  // position?: PositionComponent;
-  // velocity?: VelocityComponent;
-  // acceleration?: AccelerationComponent;
-  // force?: ForceComponent;
-  // mass?: MassComponent;
-  // canvasRender?: CanvasRenderComponent;
-  // joint?: JointComponent;
-  // userControl?: UserControlledComponent;
-}
+export type CanvasRenderComponent =
+  | {
+      kind: "rect";
+      strokeStyle: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }
+  | {
+      kind: "line";
+      strokeStyle: string;
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    };
+export interface Entity {}

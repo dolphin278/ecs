@@ -1,38 +1,41 @@
+import {
+  AccelerationComponent,
+  CanvasRenderComponent,
+  ForceComponent,
+  MassComponent,
+  PositionComponent,
+  UserControlledComponent,
+  VelocityComponent,
+} from "./components";
 import { World } from "./index";
 export const WORLD_WIDTH = 1000;
 export const WORLD_HEIGHT = 500;
-import {
-  Entity,
-  PositionComponent,
-  VelocityComponent,
-  AccelerationComponent,
-  MassComponent,
-  ForceComponent,
-  JointComponent,
-  CanvasRenderComponent,
-  UserControlledComponent,
-} from "./components";
+
+type MapValue<T> = T extends Map<any, infer U> ? U : never;
+
+type ComponentQuery<T extends ReadonlyArray<keyof World["components"]>> = {
+  [K in keyof T]: T[K] extends keyof World["components"]
+    ? MapValue<World["components"][T[K]]>
+    : never;
+};
+
+type SystemHandler<T extends ReadonlyArray<keyof World["components"]>> = (
+  delta: number,
+  ...args: ComponentQuery<T>
+) => void;
 
 // TODO: Add proper types
-export function singleEntitySystem(
-  components: Array<keyof Entity | keyof World["components"]>,
-  fn: (...args: any[]) => void
-) {
+export function singleEntitySystem<
+  T extends ReadonlyArray<keyof World["components"]>
+>(components: T, fn: SystemHandler<T>) {
   return function (world: World, delta: number) {
     entityCycle: for (const entity of world.entities) {
-      const args = [];
+      const args: Array<any> = [delta];
       for (const component of components) {
-        let componentData;
-        if (Reflect.has(world.components, component)) {
-          // @ts-ignore
-          componentData = world.components[component].get(entity);
-        } else componentData = Reflect.get(entity, component);
-
+        const componentData = world.components[component].get(entity);
         if (!componentData) continue entityCycle;
         args.push(componentData);
       }
-
-      args.push(delta);
       Reflect.apply(fn, null, args);
     }
   };
@@ -40,7 +43,7 @@ export function singleEntitySystem(
 
 export const MovementSystem = singleEntitySystem(
   ["positionComponent", "velocityComponent"],
-  (position: PositionComponent, velocity: VelocityComponent, delta: number) => {
+  (delta: number, position: PositionComponent, velocity: VelocityComponent) => {
     position.x += velocity.x * delta;
     position.y += velocity.y * delta;
   }
@@ -48,7 +51,7 @@ export const MovementSystem = singleEntitySystem(
 
 export const BounceSystem = singleEntitySystem(
   ["positionComponent", "velocityComponent"],
-  (position: PositionComponent, velocity: VelocityComponent) => {
+  (delta: number, position: PositionComponent, velocity: VelocityComponent) => {
     if (position.x > WORLD_WIDTH) {
       // position.x = 0;
       velocity.x *= -1;
@@ -79,19 +82,21 @@ export const BounceSystem = singleEntitySystem(
 );
 
 export const AccelerationSystem = singleEntitySystem(
-  ["accelerationComponent", "velocityComponent"],
+  ["accelerationComponent", "velocityComponent"] as const,
   (
+    delta: number,
     acceleration: AccelerationComponent,
-    velocity: VelocityComponent,
-    delta: number
+    velocity: VelocityComponent
   ) => {
     velocity.x += acceleration.x * delta;
     velocity.y += acceleration.y * delta;
   }
 );
+
 export const ApplyForceSystem = singleEntitySystem(
-  ["massComponent", "accelerationComponent", "forceComponent"],
+  ["massComponent", "accelerationComponent", "forceComponent"] as const,
   (
+    delta: number,
     mass: MassComponent,
     acceleration: AccelerationComponent,
     force: ForceComponent
@@ -103,8 +108,8 @@ export const ApplyForceSystem = singleEntitySystem(
 );
 
 export const ForceResetSystem = singleEntitySystem(
-  ["forceComponent"],
-  (force: ForceComponent) => {
+  ["forceComponent"] as const,
+  (delta: number, force: ForceComponent) => {
     force.x = 0;
     force.y = 0;
   }
@@ -130,7 +135,9 @@ export function GravityForceSystem(world: World) {
     const { position: e1Position, force: e1Force, mass: e1Mass } = entities[i];
 
     for (let j = i + 1; j < entities.length; j++) {
-      const { position: e2Position, force: e2Force, mass: e2Mass } = entities[j];
+      const { position: e2Position, force: e2Force, mass: e2Mass } = entities[
+        j
+      ];
 
       const dx = e2Position.x - e1Position.x;
       const dy = e2Position.y - e1Position.y;
@@ -245,8 +252,8 @@ export function CanvasCleanSystem() {
 }
 
 export const CanvasRenderSystem = singleEntitySystem(
-  ["canvasRenderComponent"],
-  (canvasRender: CanvasRenderComponent) => {
+  ["canvasRenderComponent"] as const,
+  (delta: number, canvasRender: CanvasRenderComponent) => {
     if (!canvasCtx) return;
 
     switch (canvasRender.kind) {
@@ -313,8 +320,12 @@ document.addEventListener("keyup", (event) => {
 });
 
 export const UserControlSystem = singleEntitySystem(
-  ["userControlComponent", "velocityComponent"],
-  (_userControl: UserControlledComponent, velocity: VelocityComponent) => {
+  ["userControlComponent", "velocityComponent"] as const,
+  (
+    delta: number,
+    _userControl: UserControlledComponent,
+    velocity: VelocityComponent
+  ) => {
     const vx = 0.02;
     const vy = 0.02;
 
