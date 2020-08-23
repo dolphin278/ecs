@@ -44,9 +44,9 @@ export function singleEntitySystem<
       const args: Array<any> = [delta, value];
       for (let i = 1; i < requiredComponents.length; i++) {
         const component = world.components[requiredComponents[i]];
-        const componendData = component.get(entity);
-        if (componendData === void 0) continue firstComponentCycle;
-        args.push(componendData);
+        const componentData = component.get(entity);
+        if (componentData === void 0) continue firstComponentCycle;
+        args.push(componentData);
       }
       Reflect.apply(fn, null, args);
     }
