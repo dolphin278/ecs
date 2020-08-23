@@ -39,19 +39,11 @@ export function singleEntitySystem<
   T extends ReadonlyArray<keyof World["components"]>
 >(requiredComponents: T, fn: SystemHandler<T>) {
   return function (world: World, delta: number) {
-    // TODO: Add proper type for components tuple
-    const components = [];
-    for (let i = 0; i < requiredComponents.length; i++)
-      components[i] = world.components[requiredComponents[i]];
-
-    for (const componentName of requiredComponents)
-      components.push(world.components[componentName]);
-
-    const firstComponent = components[0];
+    const firstComponent = world.components[requiredComponents[0]];
     firstComponentCycle: for (const [entity, value] of firstComponent) {
       const args: Array<any> = [delta, value];
-      for (let i = 1; i < components.length; i++) {
-        const component = components[i];
+      for (let i = 1; i < requiredComponents.length; i++) {
+        const component = world.components[requiredComponents[i]];
         const componendData = component.get(entity);
         if (componendData === void 0) continue firstComponentCycle;
         args.push(componendData);
