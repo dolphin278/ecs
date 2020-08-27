@@ -121,10 +121,10 @@ export module Components {
 }
 
 export module Systems {
-  export const Movement: System<{
-    position: Components.Position;
-    velocity: Components.Velocity;
-  }> = function Movement(world, delta) {
+  export const Movement: System<Pick<
+    BaseComponents,
+    "position" | "velocity"
+  >> = function Movement(world, delta) {
     World.entitiesWithComponents(
       ["position", "velocity"] as const,
       world
@@ -136,10 +136,7 @@ export module Systems {
   export const Bounce = (
     WORLD_WIDTH: number,
     WORLD_HEIGHT: number
-  ): System<{
-    position: Components.Position;
-    velocity: Components.Velocity;
-  }> =>
+  ): System<Pick<BaseComponents, "position" | "velocity">> =>
     function Bounce(world, delta) {
       World.entitiesWithComponents(
         ["position", "velocity"] as const,
@@ -163,10 +160,10 @@ export module Systems {
       });
     };
 
-  export const Acceleration: System<{
-    velocity: Components.Velocity;
-    acceleration: Components.Acceleration;
-  }> = function Acceleration(world, delta) {
+  export const Acceleration: System<Pick<
+    BaseComponents,
+    "velocity" | "acceleration"
+  >> = function Acceleration(world, delta) {
     World.entitiesWithComponents(
       ["acceleration", "velocity"],
       world
@@ -175,11 +172,10 @@ export module Systems {
     );
   };
 
-  export const ApplyForce: System<{
-    acceleration: Components.Acceleration;
-    mass: Components.Mass;
-    force: Components.Force;
-  }> = function ApplyForce(world, delta) {
+  export const ApplyForce: System<Pick<
+    BaseComponents,
+    "acceleration" | "mass" | "force"
+  >> = function ApplyForce(world, delta) {
     World.entitiesWithComponents(
       ["mass", "force", "acceleration"] as const,
       world
@@ -188,18 +184,18 @@ export module Systems {
     );
   };
 
-  export const ForceReset: System<{
-    force: Components.Force;
-  }> = function ForceReset(world) {
+  export const ForceReset: System<Pick<
+    BaseComponents,
+    "force"
+  >> = function ForceReset(world) {
     for (const force of world.components.force.values())
       Utils.Vector2.setToZero(force);
   };
 
-  export const Gravity: System<{
-    mass: Components.Mass;
-    force: Components.Force;
-    position: Components.Position;
-  }> = function Gravity(world) {
+  export const Gravity: System<Pick<
+    BaseComponents,
+    "mass" | "force" | "position"
+  >> = function Gravity(world) {
     const GRAVITY_CONST = 6.67e-11;
     const d = Utils.Vector2.make(0.0, 0.0);
     const entities = World.entitiesWithComponents(
@@ -223,11 +219,10 @@ export module Systems {
     }
   };
 
-  export const Spring: System<{
-    spring: Components.Spring;
-    force: Components.Force;
-    position: Components.Position;
-  }> = function Spring(world) {
+  export const Spring: System<Pick<
+    BaseComponents,
+    "spring" | "force" | "position"
+  >> = function Spring(world) {
     var d = Utils.Vector2.make(0.0, 0.0);
     var force = world.components.force;
     var position = world.components.position;
@@ -265,13 +260,12 @@ export module Systems {
     }
   };
 
-  export const DebugPhysicsRender: System<{
-    position: Components.Position;
-    userControl?: Components.UserControlled;
-    canvasRectangle: Components.CanvasRectangle;
-    canvasSpritePosition?: Components.CanvasSpritePosition;
-    mass?: Components.Mass;
-  }> = function PhysicsRender(world) {
+  export const DebugPhysicsRender: System<
+    Pick<BaseComponents, "position" | "canvasRectangle"> &
+      Partial<
+        Pick<BaseComponents, "userControl" | "canvasSpritePosition" | "mass">
+      >
+  > = function PhysicsRender(world) {
     World.entitiesWithComponents(
       ["canvasRectangle", "position"] as const,
       world
@@ -295,16 +289,15 @@ export module Systems {
       ["canvasSpritePosition", "position"] as const,
       world
     ).forEach(([entity, canvasPosition, position]) => {
-      canvasPosition!.x = position.x
-      canvasPosition!.y = position.y
+      canvasPosition!.x = position.x;
+      canvasPosition!.y = position.y;
     });
   };
 
-  export const DebugSpringRender: System<{
-    position: Components.Position;
-    spring: Components.Spring;
-    canvasLine: Components.CanvasLine;
-  }> = function DebugSpringRender(world) {
+  export const DebugSpringRender: System<Pick<
+    BaseComponents,
+    "position" | "spring" | "canvasLine"
+  >> = function DebugSpringRender(world) {
     World.entitiesWithComponents(
       ["spring", "canvasLine"] as const,
       world
@@ -322,13 +315,18 @@ export module Systems {
 
   export const CanvasRender: (
     canvas: HTMLCanvasElement
-  ) => System<{
-    canvasRectangle?: Components.CanvasRectangle;
-    canvasLine?: Components.CanvasLine;
-    canvasText?: Components.CanvasText;
-    canvasSprite?: Components.CanvasSprite;
-    canvasSpritePosition?: Components.CanvasSpritePosition;
-  }> = (canvas) =>
+  ) => System<
+    Partial<
+      Pick<
+        BaseComponents,
+        | "canvasRectangle"
+        | "canvasLine"
+        | "canvasText"
+        | "canvasSprite"
+        | "canvasSpritePosition"
+      >
+    >
+  > = (canvas) =>
     function CanvasRender(world, delta) {
       const canvasCtx = canvas.getContext("2d");
       if (!canvasCtx) return;
@@ -422,10 +420,10 @@ export module Systems {
     }
   });
 
-  export const UserControl: System<{
-    userControl: Components.UserControlled;
-    velocity: Components.Velocity;
-  }> = function UserControl(world) {
+  export const UserControl: System<Pick<
+    BaseComponents,
+    "userControl" | "velocity"
+  >> = function UserControl(world) {
     World.entitiesWithComponents(
       ["userControl", "velocity"] as const,
       world
@@ -440,11 +438,10 @@ export module Systems {
     });
   };
 
-  export const DisplayVelocity: System<{
-    velocity: Components.Velocity;
-    position: Components.Position;
-    canvasText: Components.CanvasText;
-  }> = function DisplayVelocity(world) {
+  export const DisplayVelocity: System<Pick<
+    BaseComponents,
+    "velocity" | "position" | "canvasText"
+  >> = function DisplayVelocity(world) {
     World.entitiesWithComponents(
       ["canvasText", "velocity", "position"] as const,
       world
