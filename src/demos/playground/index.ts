@@ -20,11 +20,21 @@ export function init(world: PlaygroundWorld) {
       canvasText,
       canvasRectangle,
       canvasLine,
+      canvasSpritePosition,
+      canvasSprite,
     },
   } = world;
   const maxVelocity = 0.05;
+  const dots: Core.Entity[] = [];
   for (let i = 0; i < 1000; i++) {
     const entity = Core.World.createEntity(world);
+    const x = (Math.random() * WORLD_WIDTH) | 0;
+    const y = (Math.random() * WORLD_HEIGHT) | 0;
+    dots.push(entity);
+    canvasSpritePosition.set(entity, {
+      x,
+      y,
+    });
     canvasRectangle.set(entity, {
       x: 0,
       y: 0,
@@ -33,8 +43,8 @@ export function init(world: PlaygroundWorld) {
       strokeStyle: "red",
     });
     position.set(entity, {
-      x: (Math.random() * WORLD_WIDTH) | 0,
-      y: (Math.random() * WORLD_HEIGHT) | 0,
+      x,
+      y,
     });
     velocity.set(entity, {
       x: Math.random() * maxVelocity - maxVelocity / 2,
@@ -53,6 +63,14 @@ export function init(world: PlaygroundWorld) {
     });
   }
 
+  const image = new Image();
+  image.src = "src/demos/playground/icon.png";
+
+  image.onload = async () => {
+    const sprite = await createImageBitmap(image);
+    for (const entity of dots) canvasSprite.set(entity, sprite);
+  };
+
   // Star
   const stars = [];
   for (let i = 0; i < 3; i++) {
@@ -69,7 +87,7 @@ export function init(world: PlaygroundWorld) {
     canvasText.set(entity, {
       text: "",
       font: "10px Times New Roman",
-      strokeStyle: 'black',
+      strokeStyle: "black",
       x: 0,
       y: 0,
     });
@@ -109,7 +127,6 @@ export function init(world: PlaygroundWorld) {
       y2: 0,
       strokeStyle: "blue",
     });
-
   }
 
   {
@@ -127,7 +144,6 @@ export function init(world: PlaygroundWorld) {
       y2: 0,
       strokeStyle: "blue",
     });
-
   }
 
   {
@@ -152,18 +168,19 @@ export function init(world: PlaygroundWorld) {
     canvasText.set(entity, {
       text: "Hello, world",
       font: "100px Times New Roman",
-      strokeStyle: 'black',
+      strokeStyle: "black",
       x: 100,
       y: 100,
     });
   }
 }
 
-
-const CanvasRender = Core.Systems.CanvasRender(document.getElementById('canvasRender')! as HTMLCanvasElement)
+const CanvasRender = Core.Systems.CanvasRender(
+  document.getElementById("canvasRender")! as HTMLCanvasElement
+);
 const Bounce = Core.Systems.Bounce(WORLD_WIDTH, WORLD_HEIGHT);
 function tick(world: PlaygroundWorld, delta: number) {
-  Core.Systems.UserControl(world, delta)
+  Core.Systems.UserControl(world, delta);
   Core.Systems.Movement(world, delta);
   Bounce(world, delta);
   Core.Systems.Acceleration(world, delta);
@@ -192,7 +209,9 @@ const world: PlaygroundWorld = {
     userControl: new Map(),
     canvasRectangle: new Map(),
     canvasLine: new Map(),
-    canvasText: new Map()
+    canvasText: new Map(),
+    canvasSprite: new Map(),
+    canvasSpritePosition: new Map(),
   },
 };
 

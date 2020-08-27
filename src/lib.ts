@@ -26,6 +26,8 @@ export interface BaseComponents {
   canvasRectangle: Components.CanvasRectangle;
   canvasLine: Components.CanvasLine;
   canvasText: Components.CanvasText;
+  canvasSpritePosition: Components.CanvasSpritePosition;
+  canvasSprite: Components.CanvasSprite;
 }
 
 export module World {
@@ -107,13 +109,15 @@ export module Components {
     y2: number;
   }
 
-  export interface CanvasText {
+  export interface CanvasText extends Vector2 {
     text: string;
     font: string;
     strokeStyle: string;
-    x: number;
-    y: number;
   }
+
+  export interface CanvasSpritePosition extends Vector2 {}
+
+  export interface CanvasSprite extends ImageBitmap {}
 }
 
 export module Systems {
@@ -265,6 +269,7 @@ export module Systems {
     position: Components.Position;
     userControl?: Components.UserControlled;
     canvasRectangle: Components.CanvasRectangle;
+    canvasSpritePosition?: Components.CanvasSpritePosition;
     mass?: Components.Mass;
   }> = function PhysicsRender(world) {
     World.entitiesWithComponents(
@@ -284,6 +289,14 @@ export module Systems {
         canvasRectangle.x -= size;
         canvasRectangle.y -= size;
       }
+    });
+
+    World.entitiesWithComponents(
+      ["canvasSpritePosition", "position"] as const,
+      world
+    ).forEach(([entity, canvasPosition, position]) => {
+      canvasPosition!.x = position.x
+      canvasPosition!.y = position.y
     });
   };
 
@@ -313,6 +326,8 @@ export module Systems {
     canvasRectangle?: Components.CanvasRectangle;
     canvasLine?: Components.CanvasLine;
     canvasText?: Components.CanvasText;
+    canvasSprite?: Components.CanvasSprite;
+    canvasSpritePosition?: Components.CanvasSpritePosition;
   }> = (canvas) =>
     function CanvasRender(world, delta) {
       const canvasCtx = canvas.getContext("2d");
@@ -352,6 +367,18 @@ export module Systems {
           canvasCtx.font = canvasText.font;
           canvasCtx.strokeText(canvasText.text, canvasText.x, canvasText.y);
         }
+      }
+
+      if (
+        world.components.canvasSprite &&
+        world.components.canvasSpritePosition
+      ) {
+        World.entitiesWithComponents(
+          ["canvasSprite", "canvasSpritePosition"] as const,
+          world
+        ).forEach(([_, sprite, position]) => {
+          canvasCtx.drawImage(sprite!, position!.x, position!.y);
+        });
       }
     };
 
