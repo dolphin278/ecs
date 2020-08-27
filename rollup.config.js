@@ -2,9 +2,9 @@
 import typescript from '@rollup/plugin-typescript';
 
 export default [{
-  input: 'src/lib/index.ts',
+  input: 'src/demos/playground/index.ts',
   output: {
-    dir: 'output',
+    dir: 'output/demos/playground',
     format: 'iife'
   },
   plugins: [typescript()]
