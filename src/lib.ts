@@ -37,6 +37,18 @@ export module World {
     return id;
   }
 
+  export function createEntityFromComponents<T, K extends keyof T>(
+    world: World<T>,
+    components: Pick<T, K>
+  ) {
+    const id = createEntity(world);
+    for (const component of Object.keys(components) as Array<
+      keyof typeof components
+    >)
+      world.components[component].set(id, components[component]);
+    return id;
+  }
+
   export function removeEntity<T>(
     { components, activeEntitites }: World<T>,
     entity: Entity
