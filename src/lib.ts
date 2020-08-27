@@ -338,10 +338,9 @@ export module Systems {
         | "canvasSpritePosition"
       >
     >
-  > = (canvas) =>
-    function CanvasRender(world, delta) {
-      const canvasCtx = canvas.getContext("2d");
-      if (!canvasCtx) return;
+  > = (canvas) => {
+    const canvasCtx = canvas.getContext("2d")!;
+    return function CanvasRender(world, delta) {
       canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (world.components.canvasRectangle) {
@@ -391,6 +390,7 @@ export module Systems {
         });
       }
     };
+  };
 
   // TODO: Refactor
   const keyState = {
