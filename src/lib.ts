@@ -71,6 +71,7 @@ export module World {
     const result: any[] = [];
     const row: any[] = [];
     const firstComponent = world.components[components[0]];
+    if (firstComponent === void 0) return result;
     entityLoop: for (const [entity, firstComponentValue] of firstComponent) {
       row[0] = entity;
       row[1] = firstComponentValue;
