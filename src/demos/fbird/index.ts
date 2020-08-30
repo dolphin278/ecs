@@ -24,6 +24,7 @@ export interface FBirdComponents
 }
 
 export interface FBirdWorld extends Core.World<FBirdComponents> {}
+type System = Core.System<FBirdComponents>;
 
 const WORLD_WIDTH = 1000;
 const WORLD_HEIGHT = 500;
@@ -48,13 +49,6 @@ export function init(world: FBirdWorld) {
     bird: { lastTimeKeyPressed: 0 },
     userControl: {},
     position: { x: birdX, y: birdY },
-    // canvasRectangle: {
-    //   x: birdX,
-    //   y: birdY,
-    //   width: 10,
-    //   height: 10,
-    //   strokeStyle: "red",
-    // },
     canvasSpritePosition: { x: birdX, y: birdY },
     velocity: { x: 0, y: 0 },
     acceleration: { x: 0, y: 0.0005 },
@@ -66,20 +60,12 @@ export function init(world: FBirdWorld) {
   for (let i = 0; i < PIPES_COUNT; i++) {
     const x = i * (SPACE_BETWEEN_PIPES + PIPE_WIDTH);
     const vx = -0.115;
-    // const vx = 0;
     let y = -360;
     const upperPipe = Core.World.createEntityFromComponents(world, {
       pipe: true,
       position: { x, y },
       velocity: { x: vx, y: 0 },
       canvasSpritePosition: { x, y },
-      // canvasRectangle: {
-      //   strokeStyle: "blue",
-      //   x,
-      //   y,
-      //   width: PIPE_WIDTH,
-      //   height: 500,
-      // },
     });
     upperPipes.push(upperPipe);
 
@@ -89,14 +75,6 @@ export function init(world: FBirdWorld) {
       position: { x, y },
       velocity: { x: vx, y: 0 },
       canvasSpritePosition: { x, y },
-
-      // canvasRectangle: {
-      //   strokeStyle: "blue",
-      //   x,
-      //   y,
-      //   width: PIPE_WIDTH,
-      //   height: 500,
-      // },
     });
     bottomPipes.push(bottomPipe);
   }
@@ -211,10 +189,7 @@ module Systems {
     }
   });
 
-  export const UserControl: Core.System<FBirdComponents> = function UserControl(
-    world,
-    delta
-  ) {
+  export const UserControl: System = function UserControl(world, delta) {
     for (const [_, state] of world.components.gameState) {
       if (state === "over") return;
     }
@@ -238,9 +213,7 @@ module Systems {
     }
   };
 
-  export const PipeCollision: Core.System<FBirdComponents> = function PipeCollision(
-    world
-  ) {
+  export const PipeCollision: System = function PipeCollision(world) {
     const birds = Core.World.entitiesWithComponents(
       ["bird", "position"] as const,
       world
@@ -265,7 +238,7 @@ module Systems {
     }
   };
 
-  export const Bounce: Core.System<FBirdComponents> = function Bounce(world) {
+  export const BorderCollision: System = function Bounce(world) {
     Core.World.entitiesWithComponents(
       ["bird", "position", "velocity"] as const,
       world
@@ -283,9 +256,7 @@ module Systems {
     });
   };
 
-  export const RespawnPipes: Core.System<FBirdComponents> = function RespawnPipes(
-    world
-  ) {
+  export const RespawnPipes: System = function RespawnPipes(world) {
     Core.World.entitiesWithComponents(
       ["pipe", "position"] as const,
       world
@@ -298,7 +269,7 @@ module Systems {
     });
   };
 
-  export const RespawnBackgroundTiles: Core.System<FBirdComponents> = function RespawnBackgroundTiles(
+  export const RespawnBackgroundTiles: System = function RespawnBackgroundTiles(
     world
   ) {
     Core.World.entitiesWithComponents(
@@ -311,7 +282,7 @@ module Systems {
     });
   };
 
-  export const GameOver: Core.System<FBirdComponents> = function (world) {
+  export const GameOver: System = function (world) {
     for (const [entity, state] of world.components.gameState) {
       if (state === "over") {
         const gameOverMessage = world.components.canvasText.get(entity);
@@ -342,41 +313,35 @@ module Systems {
     }
   };
 
-  export const DisplayScore: Core.System<FBirdComponents> = function (world) {
-    const display = Core.World.entitiesWithComponents(
+  export const DisplayScore: System = function (world) {
+    Core.World.entitiesWithComponents(
       ["score", "canvasText"] as const,
       world
-    );
-    for (const [_, score, canvasText] of display)
+    ).forEach(([_, score, canvasText]) => {
       canvasText.text = `Score: ${score.value}`;
+    });
   };
 }
 
 const CanvasRender = Core.Systems.CanvasRender(
   document.getElementById("canvasRender")! as HTMLCanvasElement
 );
-const Bounce = Core.Systems.Bounce(WORLD_WIDTH, WORLD_HEIGHT);
+
 function tick(world: FBirdWorld, delta: number) {
   // Core.Systems.UserControl(world, delta);
   Systems.UserControl(world, delta);
-  Core.Systems.Movement(world, delta);
 
   Systems.DisplayScore(world, delta);
   Systems.RespawnPipes(world, delta);
   Systems.RespawnBackgroundTiles(world, delta);
   Systems.GameOver(world, delta);
 
-  Systems.Bounce(world, delta);
+  Systems.BorderCollision(world, delta);
   Systems.PipeCollision(world, delta);
-  // Bounce(world, delta);
+
   Core.Systems.Acceleration(world, delta);
-  // Core.Systems.ForceReset(world, delta);
-  // Core.Systems.Gravity(world, delta);
-  // Core.Systems.Spring(world, delta);
-  // Core.Systems.ApplyForce(world, delta);
+  Core.Systems.Movement(world, delta);
   Core.Systems.DebugPhysicsRender(world, delta);
-  // Core.Systems.DebugSpringRender(world, delta);
-  // Core.Systems.DisplayVelocity(world, delta);
 
   CanvasRender(world, delta);
   world.currentTime += delta;
@@ -396,13 +361,8 @@ const world: FBirdWorld = {
     position: new Map(),
     velocity: new Map(),
     acceleration: new Map(),
-    // force: new Map(),
-    // mass: new Map(),
-    // spring: new Map(),
     userControl: new Map(),
     canvasRectangle: new Map(),
-    // canvasLine: new Map(),
-    // canvasText: new Map(),
     canvasSprite: new Map(),
     canvasSpritePosition: new Map(),
   },
