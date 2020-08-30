@@ -312,6 +312,8 @@ module Systems {
         position.x +=
           (SPACE_BETWEEN_PIPES + PIPE_WIDTH) * PIPES_COUNT +
           SPACE_BETWEEN_PIPES;
+
+        for (const score of world.components.score.values()) score.value+=1
       }
     });
   };
