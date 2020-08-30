@@ -26,7 +26,6 @@ export interface BaseComponents {
   canvasRectangle: Components.CanvasRectangle;
   canvasLine: Components.CanvasLine;
   canvasText: Components.CanvasText;
-  canvasSpritePosition: Components.CanvasSpritePosition;
   canvasSprite: Components.CanvasSprite;
 }
 
@@ -71,6 +70,7 @@ export module World {
     const result: any[] = [];
     const row: any[] = [];
     const firstComponent = world.components[components[0]];
+    if (firstComponent === void 0) return result;
     entityLoop: for (const [entity, firstComponentValue] of firstComponent) {
       row[0] = entity;
       row[1] = firstComponentValue;
@@ -111,6 +111,7 @@ export module Components {
     y: number;
     width: number;
     height: number;
+    zIndex: number;
   }
 
   export interface CanvasLine {
@@ -119,17 +120,20 @@ export module Components {
     y1: number;
     x2: number;
     y2: number;
+    zIndex: number;
   }
 
   export interface CanvasText extends Vector2 {
     text: string;
     font: string;
     strokeStyle: string;
+    zIndex: number;
   }
 
-  export interface CanvasSpritePosition extends Vector2 {}
-
-  export interface CanvasSprite extends ImageBitmap {}
+  export interface CanvasSprite extends Vector2 {
+    image?: ImageBitmap;
+    zIndex: number;
+  }
 }
 
 export module Systems {
@@ -274,9 +278,7 @@ export module Systems {
 
   export const DebugPhysicsRender: System<
     Pick<BaseComponents, "position" | "canvasRectangle"> &
-      Partial<
-        Pick<BaseComponents, "userControl" | "canvasSpritePosition" | "mass">
-      >
+      Partial<Pick<BaseComponents, "userControl" | "canvasSprite" | "mass">>
   > = function PhysicsRender(world) {
     World.entitiesWithComponents(
       ["canvasRectangle", "position"] as const,
@@ -298,7 +300,7 @@ export module Systems {
     });
 
     World.entitiesWithComponents(
-      ["canvasSpritePosition", "position"] as const,
+      ["canvasSprite", "position"] as const,
       world
     ).forEach(([entity, canvasPosition, position]) => {
       canvasPosition!.x = position.x;
@@ -327,67 +329,64 @@ export module Systems {
 
   export const CanvasRender: (
     canvas: HTMLCanvasElement
-  ) => System<
-    Partial<
-      Pick<
-        BaseComponents,
-        | "canvasRectangle"
-        | "canvasLine"
-        | "canvasText"
-        | "canvasSprite"
-        | "canvasSpritePosition"
-      >
-    >
-  > = (canvas) => {
+  ) => System<{
+    canvasRectangle: BaseComponents["canvasRectangle"];
+    canvasLine: BaseComponents["canvasLine"];
+    canvasText: BaseComponents["canvasText"];
+    canvasSprite: BaseComponents["canvasSprite"];
+  }> = (canvas) => {
     const canvasCtx = canvas.getContext("2d")!;
     return function CanvasRender(world, delta) {
       canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (world.components.canvasRectangle) {
-        for (const _canvasRect of world.components.canvasRectangle.values()) {
-          const canvasRect = _canvasRect!;
-          canvasCtx.beginPath();
-          canvasCtx.strokeStyle = canvasRect.strokeStyle;
-          canvasCtx.strokeRect(
-            canvasRect.x,
-            canvasRect.y,
-            canvasRect.width,
-            canvasRect.height
-          );
-        }
-      }
+      const thingsToRender = [
+        ...[...world.components.canvasLine?.values()].map(
+          (x) => ["canvasLine" as const, x] as const
+        ),
+        ...[...world.components.canvasRectangle?.values()].map(
+          (x) => ["canvasRectangle" as const, x] as const
+        ),
+        ...[...world.components.canvasText?.values()].map(
+          (x) => ["canvasText" as const, x] as const
+        ),
+        ...[...world.components.canvasSprite?.values()].map(
+          (x) => ["canvasSprite" as const, x] as const
+        ),
+      ];
 
-      if (world.components.canvasLine) {
-        for (const _canvasLine of world.components.canvasLine.values()) {
-          const canvasLine = _canvasLine!;
-          canvasCtx.beginPath();
-          canvasCtx.strokeStyle = canvasLine.strokeStyle;
-          canvasCtx.moveTo(canvasLine.x1, canvasLine.y1);
-          canvasCtx.lineTo(canvasLine.x2, canvasLine.y2);
-          canvasCtx.stroke();
-        }
-      }
+      // TODO: Replace sort by grouping by zIndex
+      thingsToRender.sort((t1, t2) => t1[1].zIndex - t2[1].zIndex);
 
-      if (world.components.canvasText) {
-        for (const _canvasText of world.components.canvasText.values()) {
-          const canvasText = _canvasText!;
-          canvasCtx.beginPath();
-          canvasCtx.strokeStyle = canvasText.strokeStyle;
-          canvasCtx.font = canvasText.font;
-          canvasCtx.strokeText(canvasText.text, canvasText.x, canvasText.y);
+      for (const value of thingsToRender) {
+        switch (value[0]) {
+          case "canvasRectangle":
+            canvasCtx.beginPath();
+            canvasCtx.strokeStyle = value[1].strokeStyle;
+            canvasCtx.strokeRect(
+              value[1].x,
+              value[1].y,
+              value[1].width,
+              value[1].height
+            );
+            break;
+          case "canvasLine":
+            canvasCtx.beginPath();
+            canvasCtx.strokeStyle = value[1].strokeStyle;
+            canvasCtx.moveTo(value[1].x1, value[1].y1);
+            canvasCtx.lineTo(value[1].x2, value[1].y2);
+            canvasCtx.stroke();
+            break;
+          case "canvasText":
+            canvasCtx.beginPath();
+            canvasCtx.strokeStyle = value[1].strokeStyle;
+            canvasCtx.font = value[1].font;
+            canvasCtx.strokeText(value[1].text, value[1].x, value[1].y);
+            break;
+          case "canvasSprite":
+            if (value[1]?.image === void 0) continue;
+            canvasCtx.drawImage(value[1].image, value[1].x, value[1].y);
+            break;
         }
-      }
-
-      if (
-        world.components.canvasSprite &&
-        world.components.canvasSpritePosition
-      ) {
-        World.entitiesWithComponents(
-          ["canvasSprite", "canvasSpritePosition"] as const,
-          world
-        ).forEach(([_, sprite, position]) => {
-          canvasCtx.drawImage(sprite!, position!.x, position!.y);
-        });
       }
     };
   };
@@ -466,6 +465,18 @@ export module Systems {
 }
 
 export module Utils {
+  export module Function {
+    export function partial<
+      T extends Array<unknown>,
+      U extends Array<unknown>,
+      R
+    >(fn: (...args: [...T, ...U]) => R, ...partialArgs: T) {
+      return function (...restArgs: U) {
+        return fn(...partialArgs, ...restArgs);
+      };
+    }
+  }
+
   export module Vector2 {
     export interface Vector2 {
       x: number;
@@ -476,9 +487,18 @@ export module Utils {
       return { x: +x, y: +y };
     }
 
+    export function makeZero(): Vector2 {
+      return make(0.0, 0.0);
+    }
+
     export function setToZero(out: Vector2) {
       out.x = 0.0;
       out.y = 0.0;
+    }
+
+    export function assign(out: Vector2, arg: Readonly<Vector2>) {
+      out.x = arg.x;
+      out.y = arg.y;
     }
 
     export function addVecMultiplyByScalar(
@@ -490,17 +510,21 @@ export module Utils {
       out.y += arg.y * scalar;
     }
 
-    export function addVec(out: Vector2, arg: Vector2) {
+    export function addVec(out: Vector2, arg: Readonly<Vector2>) {
       out.x += arg.x;
       out.y += arg.y;
     }
 
-    export function subVec(out: Vector2, arg: Vector2) {
+    export function subVec(out: Vector2, arg: Readonly<Vector2>) {
       out.x -= arg.x;
       out.y -= arg.y;
     }
 
-    export function diff(vec1: Vector2, vec2: Vector2, out: Vector2) {
+    export function diff(
+      vec1: Readonly<Vector2>,
+      vec2: Readonly<Vector2>,
+      out: Vector2
+    ) {
       out.x = vec1.x - vec2.x;
       out.y = vec1.y - vec2.y;
     }

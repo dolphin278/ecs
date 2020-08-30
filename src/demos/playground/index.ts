@@ -12,18 +12,13 @@ export function init(world: PlaygroundWorld) {
   const maxVelocity = 0.05;
   const dots: Core.Entity[] = [];
 
-  const createEntity = Core.World.createEntityFromComponents.bind(
-    void 0,
-    world
-  );
-
   for (let i = 0; i < 1000; i++) {
     const x = (Math.random() * WORLD_WIDTH) | 0;
     const y = (Math.random() * WORLD_HEIGHT) | 0;
 
-    const entity = createEntity({
-      canvasSpritePosition: { x, y },
-      canvasRectangle: { x, y, width: 10, height: 10, strokeStyle: "red" },
+    const entity = Core.World.createEntityFromComponents(world, {
+      canvasSprite: { x, y, zIndex: 1 },
+      canvasRectangle: { x, y, width: 10, height: 10, strokeStyle: "red", zIndex: 0 },
       position: { x, y },
       velocity: {
         x: Math.random() * maxVelocity - maxVelocity / 2,
@@ -41,7 +36,7 @@ export function init(world: PlaygroundWorld) {
 
   image.onload = async () => {
     const sprite = await createImageBitmap(image);
-    for (const entity of dots) canvasSprite.set(entity, sprite);
+    for (const entity of dots) canvasSprite.get(entity)!.image = sprite;
   };
 
   // Star
@@ -52,10 +47,10 @@ export function init(world: PlaygroundWorld) {
     const y = (Math.random() * WORLD_HEIGHT) | 0;
     const font = "10px Times New Roman";
 
-    const entity = createEntity({
+    const entity = Core.World.createEntityFromComponents(world, {
       userControl: true,
-      canvasRectangle: { x, y, width: 10, height: 10, strokeStyle: "red" },
-      canvasText: { text: "", font, strokeStyle: "black", x, y },
+      canvasRectangle: { x, y, width: 10, height: 10, strokeStyle: "red", zIndex: 0 },
+      canvasText: { text: "", font, strokeStyle: "black", x, y, zIndex: 0 },
       position: { x, y },
       velocity: { x: 0, y: 0 },
       force: { x: 0, y: 0 },
@@ -65,43 +60,44 @@ export function init(world: PlaygroundWorld) {
     stars.push(entity);
   }
 
-  createEntity({
+  Core.World.createEntityFromComponents(world, {
     spring: {
       entity1: stars[0],
       entity2: stars[1],
       k: 1e-5,
       originalDistance: 100,
     },
-    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue" },
+    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex:0 },
   });
 
-  createEntity({
+  Core.World.createEntityFromComponents(world, {
     spring: {
       entity1: stars[1],
       entity2: stars[2],
       k: 1e-5,
       originalDistance: 100,
     },
-    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue" },
+    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex:0 },
   });
 
-  createEntity({
+  Core.World.createEntityFromComponents(world, {
     spring: {
       entity1: stars[0],
       entity2: stars[2],
       k: 1e-5,
       originalDistance: 100,
     },
-    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue" },
+    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue" , zIndex:0},
   });
 
-  createEntity({
+  Core.World.createEntityFromComponents(world, {
     canvasText: {
       text: "Hello, world!",
       font: "100px Times New Roman",
       strokeStyle: "black",
       x: 100,
       y: 100,
+      zIndex: 0
     },
   });
 }
@@ -142,7 +138,6 @@ const world: PlaygroundWorld = {
     canvasLine: new Map(),
     canvasText: new Map(),
     canvasSprite: new Map(),
-    canvasSpritePosition: new Map(),
   },
 };
 

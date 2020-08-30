@@ -15,4 +15,11 @@ export default [{
     format: 'iife'
   },
   plugins: [typescript()]
+},{
+  input: 'src/demos/fbird/index.ts',
+  output: {
+    dir: 'output/demos/fbird',
+    format: 'iife'
+  },
+  plugins: [typescript()]
 }];
