@@ -529,9 +529,18 @@ export module Utils {
       return { x: +x, y: +y };
     }
 
+    export function makeZero(): Vector2 {
+      return make(0.0, 0.0);
+    }
+
     export function setToZero(out: Vector2) {
       out.x = 0.0;
       out.y = 0.0;
+    }
+
+    export function assign(out:Vector2, arg: Readonly<Vector2>) {
+      out.x = arg.x
+      out.y = arg.y
     }
 
     export function addVecMultiplyByScalar(
@@ -543,17 +552,17 @@ export module Utils {
       out.y += arg.y * scalar;
     }
 
-    export function addVec(out: Vector2, arg: Vector2) {
+    export function addVec(out: Vector2, arg: Readonly<Vector2>) {
       out.x += arg.x;
       out.y += arg.y;
     }
 
-    export function subVec(out: Vector2, arg: Vector2) {
+    export function subVec(out: Vector2, arg: Readonly<Vector2>) {
       out.x -= arg.x;
       out.y -= arg.y;
     }
 
-    export function diff(vec1: Vector2, vec2: Vector2, out: Vector2) {
+    export function diff(vec1: Readonly<Vector2>, vec2: Readonly<Vector2>, out: Vector2) {
       out.x = vec1.x - vec2.x;
       out.y = vec1.y - vec2.y;
     }
