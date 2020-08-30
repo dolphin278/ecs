@@ -1,7 +1,20 @@
 console.log("Hello, world");
 import type { BaseComponents } from "../../lib/components";
 import type { Entity, World } from "../../lib/index";
-import * as Systems from "../../lib/systems";
+import { AcceleratedMovement } from "../../lib/systems/AcceleratedMovement";
+import { make as makeBounce } from "../../lib/systems/Bounce";
+import { make as makeCanvasRender } from "../../lib/systems/CanvasRender";
+import { DebugDisplayVelocity } from "../../lib/systems/DebugDisplayVelocity";
+import { DebugPhysicsRender } from "../../lib/systems/DebugPhysicsRender";
+import { DebugSpringRender } from "../../lib/systems/DebugSpringRender";
+import {
+  ForceApplication,
+  ForceReset,
+} from "../../lib/systems/ForceApplication";
+import { Gravitation } from "../../lib/systems/Gravitation";
+import { Movement } from "../../lib/systems/Movement";
+import { Spring } from "../../lib/systems/Spring";
+import { make as makeUserControl } from "../../lib/systems/UserControl";
 import { createEntityFromComponents } from "../../lib/world";
 
 export interface PlaygroundComponents extends BaseComponents {}
@@ -118,22 +131,25 @@ export function init(world: PlaygroundWorld) {
   });
 }
 
-const CanvasRender = Systems.CanvasRender(
+const CanvasRender = makeCanvasRender(
   document.getElementById("canvasRender")! as HTMLCanvasElement
 );
-const BounceSystem = Systems.Bounce(WORLD_WIDTH, WORLD_HEIGHT);
+
+const BounceSystem = makeBounce(WORLD_WIDTH, WORLD_HEIGHT);
+const UserControl = makeUserControl(document);
+
 function tick(world: PlaygroundWorld, delta: number) {
-  Systems.UserControl(world, delta);
-  Systems.Movement(world, delta);
+  UserControl(world, delta);
+  Movement(world, delta);
   BounceSystem(world, delta);
-  Systems.Acceleration(world, delta);
-  Systems.ForceReset(world, delta);
-  Systems.Gravity(world, delta);
-  Systems.Spring(world, delta);
-  Systems.ApplyForce(world, delta);
-  Systems.DebugPhysicsRender(world, delta);
-  Systems.DebugSpringRender(world, delta);
-  Systems.DisplayVelocity(world, delta);
+  AcceleratedMovement(world, delta);
+  ForceReset(world, delta);
+  Gravitation(world, delta);
+  Spring(world, delta);
+  ForceApplication(world, delta);
+  DebugPhysicsRender(world, delta);
+  DebugSpringRender(world, delta);
+  DebugDisplayVelocity(world, delta);
 
   CanvasRender(world, delta);
 }

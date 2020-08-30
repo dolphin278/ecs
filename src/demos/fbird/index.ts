@@ -2,7 +2,10 @@ console.log("Fbird demo");
 
 import type { BaseComponents } from "../../lib/components";
 import type { Entity, System as LibSystem, World } from "../../lib/index";
-import * as CoreSystems from "../../lib/systems";
+import { AcceleratedMovement } from "../../lib/systems/AcceleratedMovement";
+import { make as makeCanvasRender } from "../../lib/systems/CanvasRender";
+import { DebugPhysicsRender } from "../../lib/systems/DebugPhysicsRender";
+import { Movement } from "../../lib/systems/Movement";
 import * as Vector2 from "../../lib/utils/Vector2";
 import {
   createEntityFromComponents,
@@ -390,7 +393,7 @@ module Systems {
   };
 }
 
-const CanvasRender = CoreSystems.CanvasRender(
+const CanvasRender = makeCanvasRender(
   document.getElementById("canvasRender")! as HTMLCanvasElement
 );
 
@@ -407,9 +410,9 @@ function tick(world: FBirdWorld, delta: number) {
   Systems.BorderCollision(world, delta);
   Systems.PipeCollision(world, delta);
 
-  CoreSystems.Acceleration(world, delta);
-  CoreSystems.Movement(world, delta);
-  CoreSystems.DebugPhysicsRender(world, delta);
+  AcceleratedMovement(world, delta);
+  Movement(world, delta);
+  DebugPhysicsRender(world, delta);
 
   CanvasRender(world, delta);
   world.currentTime += delta;
