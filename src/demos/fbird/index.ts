@@ -1,10 +1,20 @@
 console.log("Fbird demo");
 
-import * as Core from "../../lib";
+import type { BaseComponents } from "../../lib/components";
+import type { Entity, System as LibSystem, World } from "../../lib/index";
+import { AcceleratedMovement } from "../../lib/systems/AcceleratedMovement";
+import { make as makeCanvasRender } from "../../lib/systems/CanvasRender";
+import { DebugPhysicsRender } from "../../lib/systems/DebugPhysicsRender";
+import { Movement } from "../../lib/systems/Movement";
+import * as Vector2 from "../../lib/utils/Vector2";
+import {
+  createEntityFromComponents,
+  entitiesWithComponents,
+} from "../../lib/world";
 
 export interface FBirdComponents
   extends Pick<
-    Core.BaseComponents,
+    BaseComponents,
     | "position"
     | "velocity"
     | "acceleration"
@@ -25,14 +35,14 @@ export interface FBirdComponents
   tile: boolean;
   score: { value: number };
   obstacle: {
-    upperPipe: Core.Entity;
-    bottomPipe: Core.Entity;
+    upperPipe: Entity;
+    bottomPipe: Entity;
     passageHeight: number;
   };
 }
 
-export interface FBirdWorld extends Core.World<FBirdComponents> {}
-type System = Core.System<FBirdComponents>;
+export interface FBirdWorld extends World<FBirdComponents> {}
+type System = LibSystem<FBirdComponents>;
 
 const WORLD_WIDTH = 1000;
 const WORLD_HEIGHT = 500;
@@ -49,7 +59,7 @@ export function init(world: FBirdWorld) {
   const birdX = WORLD_WIDTH / 2;
   const birdY = WORLD_HEIGHT / 2;
 
-  const bird = Core.World.createEntityFromComponents(world, {
+  const bird = createEntityFromComponents(world, {
     bird: { lastTimeKeyPressed: 0 },
     userControl: {},
     position: { x: birdX, y: birdY },
@@ -59,34 +69,37 @@ export function init(world: FBirdWorld) {
     body: true,
   });
 
-  const upperPipes: Core.Entity[] = [];
-  const bottomPipes: Core.Entity[] = [];
+  const upperPipes: Entity[] = [];
+  const bottomPipes: Entity[] = [];
 
   for (let i = 0; i < PIPES_COUNT; i++) {
-    const x = 700 +  i * (SPACE_BETWEEN_PIPES + PIPE_WIDTH);
+    const x = 700 + i * (SPACE_BETWEEN_PIPES + PIPE_WIDTH);
     const vx = -0.115;
 
     const passageHeight = 200;
     const passageY = WORLD_HEIGHT / 2;
 
-    const upperPipe = Core.World.createEntityFromComponents(world, {
+    const upperPipe = createEntityFromComponents(world, {
       pipe: true,
-      position: Core.Utils.Vector2.makeZero(),
-      velocity: Core.Utils.Vector2.makeZero(),
-      canvasSprite: { x, y:0, zIndex: 5 },
+      position: Vector2.makeZero(),
+      velocity: Vector2.makeZero(),
+      canvasSprite: { x, y: 0, zIndex: 5 },
     });
     upperPipes.push(upperPipe);
 
-    const bottomPipe = Core.World.createEntityFromComponents(world, {
+    const bottomPipe = createEntityFromComponents(world, {
       pipe: true,
-      position: Core.Utils.Vector2.makeZero(),
-      velocity: Core.Utils.Vector2.makeZero(),
-      canvasSprite: { x, y:0, zIndex: 5 },
+      position: Vector2.makeZero(),
+      velocity: Vector2.makeZero(),
+      canvasSprite: { x, y: 0, zIndex: 5 },
     });
     bottomPipes.push(bottomPipe);
 
-    const obstacle = Core.World.createEntityFromComponents(world, {
-      position: {x, y: passageY + (Math.random() * WORLD_HEIGHT / 2 - WORLD_HEIGHT / 4)},
+    const obstacle = createEntityFromComponents(world, {
+      position: {
+        x,
+        y: passageY + ((Math.random() * WORLD_HEIGHT) / 2 - WORLD_HEIGHT / 4),
+      },
       velocity: { x: vx, y: 0 },
       obstacle: {
         upperPipe,
@@ -96,11 +109,11 @@ export function init(world: FBirdWorld) {
     });
   }
 
-  const backgroundTiles: Core.Entity[] = [];
+  const backgroundTiles: Entity[] = [];
   for (let i = 0; i < BACKGROUND_TILES_COUNT; i++) {
     const x = i * BACKGROUND_TILE_WIDTH;
     const vx = -0.055;
-    const tile = Core.World.createEntityFromComponents(world, {
+    const tile = createEntityFromComponents(world, {
       position: { x, y: 400 },
       velocity: { x: vx, y: 0 },
       canvasSprite: { x, y: 100, zIndex: 3 },
@@ -120,7 +133,7 @@ export function init(world: FBirdWorld) {
     };
   }
 
-  const scoreDisplay = Core.World.createEntityFromComponents(world, {
+  const scoreDisplay = createEntityFromComponents(world, {
     score: {
       value: 0,
     },
@@ -181,28 +194,39 @@ export function init(world: FBirdWorld) {
 }
 
 module Systems {
-
   export const Obstacle: System = function (world) {
-    const obstacles = Core.World.entitiesWithComponents(['obstacle', 'position', 'velocity'] as const, world);
+    const obstacles = entitiesWithComponents(
+      ["obstacle", "position", "velocity"] as const,
+      world
+    );
 
     for (const [entity, obstacle, position, velocity] of obstacles) {
-      const upperPipeVelocity = world.components.velocity.get(obstacle.upperPipe);
-      if (upperPipeVelocity) Core.Utils.Vector2.assign(upperPipeVelocity, velocity)
-      const bottomPipeVelocity = world.components.velocity.get(obstacle.bottomPipe);
-      if (bottomPipeVelocity) Core.Utils.Vector2.assign(bottomPipeVelocity, velocity);
+      const upperPipeVelocity = world.components.velocity.get(
+        obstacle.upperPipe
+      );
+      if (upperPipeVelocity) Vector2.assign(upperPipeVelocity, velocity);
+      const bottomPipeVelocity = world.components.velocity.get(
+        obstacle.bottomPipe
+      );
+      if (bottomPipeVelocity) Vector2.assign(bottomPipeVelocity, velocity);
 
-      const upperPipePosition = world.components.position.get(obstacle.upperPipe);
+      const upperPipePosition = world.components.position.get(
+        obstacle.upperPipe
+      );
       if (upperPipePosition) {
-        upperPipePosition.x = position.x
-        upperPipePosition.y = position.y - PIPE_HEIGHT - obstacle.passageHeight / 2;
+        upperPipePosition.x = position.x;
+        upperPipePosition.y =
+          position.y - PIPE_HEIGHT - obstacle.passageHeight / 2;
       }
-      const bottomPipePosition = world.components.position.get(obstacle.bottomPipe);
+      const bottomPipePosition = world.components.position.get(
+        obstacle.bottomPipe
+      );
       if (bottomPipePosition) {
-        bottomPipePosition.x = position.x
+        bottomPipePosition.x = position.x;
         bottomPipePosition.y = position.y + obstacle.passageHeight / 2;
       }
     }
-  }
+  };
 
   const keyState = {
     up: false,
@@ -244,7 +268,7 @@ module Systems {
   });
 
   export const UserControl: System = function UserControl(world, delta) {
-    Core.World.entitiesWithComponents(
+    entitiesWithComponents(
       ["userControl", "bird", "velocity"] as const,
       world
     ).forEach(([_, userControl, bird, velocity]) => {
@@ -259,14 +283,8 @@ module Systems {
   };
 
   export const PipeCollision: System = function PipeCollision(world) {
-    const birds = Core.World.entitiesWithComponents(
-      ["bird", "position"] as const,
-      world
-    );
-    const pipes = Core.World.entitiesWithComponents(
-      ["pipe", "position"] as const,
-      world
-    );
+    const birds = entitiesWithComponents(["bird", "position"] as const, world);
+    const pipes = entitiesWithComponents(["pipe", "position"] as const, world);
 
     for (const [_, _pipe, pipePosition] of pipes) {
       for (const [birdEntity, _bird, birdPosition] of birds) {
@@ -284,7 +302,7 @@ module Systems {
   };
 
   export const BorderCollision: System = function Bounce(world) {
-    Core.World.entitiesWithComponents(
+    entitiesWithComponents(
       ["body", "position", "velocity"] as const,
       world
     ).forEach(([bodyEntity, _body, position, velocity]) => {
@@ -302,33 +320,30 @@ module Systems {
   };
 
   export const RespawnObstacles: System = function RespawnPipes(world) {
-    Core.World.entitiesWithComponents(
-      ["obstacle", "position"] as const,
-      world
-    ).forEach(([_, obstacle, position]) => {
-      if (position.x < -PIPE_WIDTH) {
-        position.y = 
-        obstacle.passageHeight *= 0.8
-        position.x +=
-          (SPACE_BETWEEN_PIPES + PIPE_WIDTH) * PIPES_COUNT +
-          SPACE_BETWEEN_PIPES;
+    entitiesWithComponents(["obstacle", "position"] as const, world).forEach(
+      ([_, obstacle, position]) => {
+        if (position.x < -PIPE_WIDTH) {
+          position.y = obstacle.passageHeight *= 0.8;
+          position.x +=
+            (SPACE_BETWEEN_PIPES + PIPE_WIDTH) * PIPES_COUNT +
+            SPACE_BETWEEN_PIPES;
 
-        for (const score of world.components.score.values()) score.value+=1
+          for (const score of world.components.score.values()) score.value += 1;
+        }
       }
-    });
+    );
   };
 
   export const RespawnBackgroundTiles: System = function RespawnBackgroundTiles(
     world
   ) {
-    Core.World.entitiesWithComponents(
-      ["tile", "position"] as const,
-      world
-    ).forEach(([_, _tile, position]) => {
-      if (position.x < -BACKGROUND_TILE_WIDTH) {
-        position.x += BACKGROUND_TILE_WIDTH * BACKGROUND_TILES_COUNT;
+    entitiesWithComponents(["tile", "position"] as const, world).forEach(
+      ([_, _tile, position]) => {
+        if (position.x < -BACKGROUND_TILE_WIDTH) {
+          position.x += BACKGROUND_TILE_WIDTH * BACKGROUND_TILES_COUNT;
+        }
       }
-    });
+    );
   };
 
   export const GameOver: System = function (world) {
@@ -346,33 +361,30 @@ module Systems {
           y: 250,
         });
       }
-      Core.World.entitiesWithComponents(
-        ["obstacle", "velocity"] as const,
-        world
-      ).forEach(([_, _pipe, velocity]) => {
-        velocity.x = 0;
-      });
+      entitiesWithComponents(["obstacle", "velocity"] as const, world).forEach(
+        ([_, _pipe, velocity]) => {
+          velocity.x = 0;
+        }
+      );
 
-      Core.World.entitiesWithComponents(
-        ["tile", "velocity"] as const,
-        world
-      ).forEach(([_, _tile, velocity]) => {
-        velocity.x = 0;
-      });
+      entitiesWithComponents(["tile", "velocity"] as const, world).forEach(
+        ([_, _tile, velocity]) => {
+          velocity.x = 0;
+        }
+      );
     }
   };
 
   export const DisplayScore: System = function (world) {
-    Core.World.entitiesWithComponents(
-      ["score", "canvasText"] as const,
-      world
-    ).forEach(([_, score, canvasText]) => {
-      canvasText.text = `Score: ${score.value}`;
-    });
+    entitiesWithComponents(["score", "canvasText"] as const, world).forEach(
+      ([_, score, canvasText]) => {
+        canvasText.text = `Score: ${score.value}`;
+      }
+    );
   };
 
   export const Flap: System = function (world) {
-    Core.World.entitiesWithComponents(
+    entitiesWithComponents(
       ["bird", "canvasSprite", "velocity"] as const,
       world
     ).forEach(([_, bird, sprite, velocity]) => {
@@ -381,7 +393,7 @@ module Systems {
   };
 }
 
-const CanvasRender = Core.Systems.CanvasRender(
+const CanvasRender = makeCanvasRender(
   document.getElementById("canvasRender")! as HTMLCanvasElement
 );
 
@@ -398,9 +410,9 @@ function tick(world: FBirdWorld, delta: number) {
   Systems.BorderCollision(world, delta);
   Systems.PipeCollision(world, delta);
 
-  Core.Systems.Acceleration(world, delta);
-  Core.Systems.Movement(world, delta);
-  Core.Systems.DebugPhysicsRender(world, delta);
+  AcceleratedMovement(world, delta);
+  Movement(world, delta);
+  DebugPhysicsRender(world, delta);
 
   CanvasRender(world, delta);
   world.currentTime += delta;
