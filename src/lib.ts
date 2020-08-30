@@ -388,48 +388,6 @@ export module Systems {
             break;
         }
       }
-
-      // if (world.components.canvasRectangle) {
-      //   for (const _canvasRect of world.components.canvasRectangle.values()) {
-      //     const canvasRect = _canvasRect!;
-      //     canvasCtx.beginPath();
-      //     canvasCtx.strokeStyle = canvasRect.strokeStyle;
-      //     canvasCtx.strokeRect(
-      //       canvasRect.x,
-      //       canvasRect.y,
-      //       canvasRect.width,
-      //       canvasRect.height
-      //     );
-      //   }
-      // }
-
-      // if (world.components.canvasLine) {
-      //   for (const _canvasLine of world.components.canvasLine.values()) {
-      //     const canvasLine = _canvasLine!;
-      //     canvasCtx.beginPath();
-      //     canvasCtx.strokeStyle = canvasLine.strokeStyle;
-      //     canvasCtx.moveTo(canvasLine.x1, canvasLine.y1);
-      //     canvasCtx.lineTo(canvasLine.x2, canvasLine.y2);
-      //     canvasCtx.stroke();
-      //   }
-      // }
-
-      // if (world.components.canvasText) {
-      //   for (const _canvasText of world.components.canvasText.values()) {
-      //     const canvasText = _canvasText!;
-      //     canvasCtx.beginPath();
-      //     canvasCtx.strokeStyle = canvasText.strokeStyle;
-      //     canvasCtx.font = canvasText.font;
-      //     canvasCtx.strokeText(canvasText.text, canvasText.x, canvasText.y);
-      //   }
-      // }
-
-      // if (world.components.canvasSprite) {
-      //   for (const sprite of world.components.canvasSprite!.values()) {
-      //     if (sprite?.image === void 0) continue;
-      //     canvasCtx.drawImage(sprite.image, sprite.x, sprite.y);
-      //   }
-      // }
     };
   };
 
@@ -538,9 +496,9 @@ export module Utils {
       out.y = 0.0;
     }
 
-    export function assign(out:Vector2, arg: Readonly<Vector2>) {
-      out.x = arg.x
-      out.y = arg.y
+    export function assign(out: Vector2, arg: Readonly<Vector2>) {
+      out.x = arg.x;
+      out.y = arg.y;
     }
 
     export function addVecMultiplyByScalar(
@@ -562,7 +520,11 @@ export module Utils {
       out.y -= arg.y;
     }
 
-    export function diff(vec1: Readonly<Vector2>, vec2: Readonly<Vector2>, out: Vector2) {
+    export function diff(
+      vec1: Readonly<Vector2>,
+      vec2: Readonly<Vector2>,
+      out: Vector2
+    ) {
       out.x = vec1.x - vec2.x;
       out.y = vec1.y - vec2.y;
     }
