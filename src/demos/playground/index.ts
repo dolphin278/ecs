@@ -1,8 +1,11 @@
 console.log("Hello, world");
-import * as Core from "../../lib";
+import type { BaseComponents } from "../../lib/components";
+import type { Entity, World } from "../../lib/index";
+import * as Systems from "../../lib/systems";
+import { createEntityFromComponents } from "../../lib/world";
 
-export interface PlaygroundComponents extends Core.BaseComponents {}
-export interface PlaygroundWorld extends Core.World<PlaygroundComponents> {}
+export interface PlaygroundComponents extends BaseComponents {}
+export interface PlaygroundWorld extends World<PlaygroundComponents> {}
 
 export const WORLD_WIDTH = 1000;
 export const WORLD_HEIGHT = 500;
@@ -10,15 +13,22 @@ export const WORLD_HEIGHT = 500;
 export function init(world: PlaygroundWorld) {
   const canvasSprite = world.components.canvasSprite;
   const maxVelocity = 0.05;
-  const dots: Core.Entity[] = [];
+  const dots: Entity[] = [];
 
   for (let i = 0; i < 1000; i++) {
     const x = (Math.random() * WORLD_WIDTH) | 0;
     const y = (Math.random() * WORLD_HEIGHT) | 0;
 
-    const entity = Core.World.createEntityFromComponents(world, {
+    const entity = createEntityFromComponents(world, {
       canvasSprite: { x, y, zIndex: 1 },
-      canvasRectangle: { x, y, width: 10, height: 10, strokeStyle: "red", zIndex: 0 },
+      canvasRectangle: {
+        x,
+        y,
+        width: 10,
+        height: 10,
+        strokeStyle: "red",
+        zIndex: 0,
+      },
       position: { x, y },
       velocity: {
         x: Math.random() * maxVelocity - maxVelocity / 2,
@@ -42,14 +52,20 @@ export function init(world: PlaygroundWorld) {
   // Star
   const stars = [];
   for (let i = 0; i < 3; i++) {
-    // const entity = Core.World.createEntity(world);
     const x = (Math.random() * WORLD_WIDTH) | 0;
     const y = (Math.random() * WORLD_HEIGHT) | 0;
     const font = "10px Times New Roman";
 
-    const entity = Core.World.createEntityFromComponents(world, {
+    const entity = createEntityFromComponents(world, {
       userControl: true,
-      canvasRectangle: { x, y, width: 10, height: 10, strokeStyle: "red", zIndex: 0 },
+      canvasRectangle: {
+        x,
+        y,
+        width: 10,
+        height: 10,
+        strokeStyle: "red",
+        zIndex: 0,
+      },
       canvasText: { text: "", font, strokeStyle: "black", x, y, zIndex: 0 },
       position: { x, y },
       velocity: { x: 0, y: 0 },
@@ -60,64 +76,64 @@ export function init(world: PlaygroundWorld) {
     stars.push(entity);
   }
 
-  Core.World.createEntityFromComponents(world, {
+  createEntityFromComponents(world, {
     spring: {
       entity1: stars[0],
       entity2: stars[1],
       k: 1e-5,
       originalDistance: 100,
     },
-    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex:0 },
+    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex: 0 },
   });
 
-  Core.World.createEntityFromComponents(world, {
+  createEntityFromComponents(world, {
     spring: {
       entity1: stars[1],
       entity2: stars[2],
       k: 1e-5,
       originalDistance: 100,
     },
-    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex:0 },
+    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex: 0 },
   });
 
-  Core.World.createEntityFromComponents(world, {
+  createEntityFromComponents(world, {
     spring: {
       entity1: stars[0],
       entity2: stars[2],
       k: 1e-5,
       originalDistance: 100,
     },
-    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue" , zIndex:0},
+    canvasLine: { x1: 0, y1: 0, x2: 0, y2: 0, strokeStyle: "blue", zIndex: 0 },
   });
 
-  Core.World.createEntityFromComponents(world, {
+  createEntityFromComponents(world, {
     canvasText: {
       text: "Hello, world!",
       font: "100px Times New Roman",
       strokeStyle: "black",
       x: 100,
       y: 100,
-      zIndex: 0
+      zIndex: 0,
     },
   });
 }
 
-const CanvasRender = Core.Systems.CanvasRender(
+const CanvasRender = Systems.CanvasRender(
   document.getElementById("canvasRender")! as HTMLCanvasElement
 );
-const Bounce = Core.Systems.Bounce(WORLD_WIDTH, WORLD_HEIGHT);
+const BounceSystem = Systems.Bounce(WORLD_WIDTH, WORLD_HEIGHT);
 function tick(world: PlaygroundWorld, delta: number) {
-  Core.Systems.UserControl(world, delta);
-  Core.Systems.Movement(world, delta);
-  Bounce(world, delta);
-  Core.Systems.Acceleration(world, delta);
-  Core.Systems.ForceReset(world, delta);
-  Core.Systems.Gravity(world, delta);
-  Core.Systems.Spring(world, delta);
-  Core.Systems.ApplyForce(world, delta);
-  Core.Systems.DebugPhysicsRender(world, delta);
-  Core.Systems.DebugSpringRender(world, delta);
-  Core.Systems.DisplayVelocity(world, delta);
+  Systems.UserControl(world, delta);
+  Systems.Movement(world, delta);
+  BounceSystem(world, delta);
+  Systems.Acceleration(world, delta);
+  Systems.ForceReset(world, delta);
+  Systems.Gravity(world, delta);
+  Systems.Spring(world, delta);
+  Systems.ApplyForce(world, delta);
+  Systems.DebugPhysicsRender(world, delta);
+  Systems.DebugSpringRender(world, delta);
+  Systems.DisplayVelocity(world, delta);
 
   CanvasRender(world, delta);
 }
