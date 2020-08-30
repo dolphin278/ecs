@@ -1,13 +1,13 @@
 console.log("Fbird demo");
 
 import type { BaseComponents } from "../../lib/components";
-import type { Entity, World, System as LibSystem } from "../../lib/index";
+import type { Entity, System as LibSystem, World } from "../../lib/index";
+import * as CoreSystems from "../../lib/systems";
+import * as Vector2 from "../../lib/utils/Vector2";
 import {
   createEntityFromComponents,
   entitiesWithComponents,
 } from "../../lib/world";
-import * as Utils from "../../lib/utils";
-import * as CoreSystems from "../../lib/systems";
 
 export interface FBirdComponents
   extends Pick<
@@ -78,16 +78,16 @@ export function init(world: FBirdWorld) {
 
     const upperPipe = createEntityFromComponents(world, {
       pipe: true,
-      position: Utils.Vector2.makeZero(),
-      velocity: Utils.Vector2.makeZero(),
+      position: Vector2.makeZero(),
+      velocity: Vector2.makeZero(),
       canvasSprite: { x, y: 0, zIndex: 5 },
     });
     upperPipes.push(upperPipe);
 
     const bottomPipe = createEntityFromComponents(world, {
       pipe: true,
-      position: Utils.Vector2.makeZero(),
-      velocity: Utils.Vector2.makeZero(),
+      position: Vector2.makeZero(),
+      velocity: Vector2.makeZero(),
       canvasSprite: { x, y: 0, zIndex: 5 },
     });
     bottomPipes.push(bottomPipe);
@@ -201,12 +201,11 @@ module Systems {
       const upperPipeVelocity = world.components.velocity.get(
         obstacle.upperPipe
       );
-      if (upperPipeVelocity) Utils.Vector2.assign(upperPipeVelocity, velocity);
+      if (upperPipeVelocity) Vector2.assign(upperPipeVelocity, velocity);
       const bottomPipeVelocity = world.components.velocity.get(
         obstacle.bottomPipe
       );
-      if (bottomPipeVelocity)
-        Utils.Vector2.assign(bottomPipeVelocity, velocity);
+      if (bottomPipeVelocity) Vector2.assign(bottomPipeVelocity, velocity);
 
       const upperPipePosition = world.components.position.get(
         obstacle.upperPipe

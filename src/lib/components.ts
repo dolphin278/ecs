@@ -1,7 +1,5 @@
 import { Entity } from "./index";
-import { Vector2 } from "./utils";
-
-type Vector2 = Vector2.Vector2;
+import { Vector2 } from "./utils/Vector2";
 
 export interface Position extends Vector2 {}
 export interface Velocity extends Vector2 {}

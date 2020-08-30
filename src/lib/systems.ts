@@ -1,7 +1,7 @@
 import type { System } from "./index";
 import type { BaseComponents } from "./components";
 import * as World from "./world";
-import * as Utils from "./utils";
+import * as Vector2 from './utils/Vector2'
 
 export const Movement: System<Pick<
   BaseComponents,
@@ -11,7 +11,7 @@ export const Movement: System<Pick<
     ["position", "velocity"] as const,
     world
   ).forEach(([_, position, velocity]) =>
-    Utils.Vector2.addVecMultiplyByScalar(position, velocity, delta)
+    Vector2.addVecMultiplyByScalar(position, velocity, delta)
   );
 };
 
@@ -50,7 +50,7 @@ export const Acceleration: System<Pick<
     ["acceleration", "velocity"],
     world
   ).forEach(([_, acceleration, velocity]) =>
-    Utils.Vector2.addVecMultiplyByScalar(velocity, acceleration, delta)
+    Vector2.addVecMultiplyByScalar(velocity, acceleration, delta)
   );
 };
 
@@ -62,7 +62,7 @@ export const ApplyForce: System<Pick<
     ["mass", "force", "acceleration"] as const,
     world
   ).forEach(([_, mass, force, acceleration]) =>
-    Utils.Vector2.addVecMultiplyByScalar(acceleration, force, 1 / mass.value)
+    Vector2.addVecMultiplyByScalar(acceleration, force, 1 / mass.value)
   );
 };
 
@@ -71,7 +71,7 @@ export const ForceReset: System<Pick<
   "force"
 >> = function ForceReset(world) {
   for (const force of world.components.force.values())
-    Utils.Vector2.setToZero(force);
+    Vector2.setToZero(force);
 };
 
 export const Gravity: System<Pick<
@@ -79,7 +79,7 @@ export const Gravity: System<Pick<
   "mass" | "force" | "position"
 >> = function Gravity(world) {
   const GRAVITY_CONST = 6.67e-11;
-  const d = Utils.Vector2.make(0.0, 0.0);
+  const d = Vector2.make(0.0, 0.0);
   const entities = World.entitiesWithComponents(
     ["mass", "force", "position"] as const,
     world
@@ -88,15 +88,15 @@ export const Gravity: System<Pick<
     var [_, mass1, force1, position1] = entities[i];
     for (var j = i + 1; j < entities.length; j++) {
       var [_, mass2, force2, position2] = entities[j];
-      Utils.Vector2.diff(position2, position1, d);
-      if (Utils.Vector2.isZero(d)) continue;
-      var dModule = Utils.Vector2.module(d);
+      Vector2.diff(position2, position1, d);
+      if (Vector2.isZero(d)) continue;
+      var dModule = Vector2.module(d);
       var forceModule =
         (GRAVITY_CONST * mass1.value * mass2.value) /
-        Utils.Vector2.moduleSquare(d) /
+        Vector2.moduleSquare(d) /
         dModule;
-      Utils.Vector2.addVecMultiplyByScalar(force1, d, forceModule);
-      Utils.Vector2.addVecMultiplyByScalar(force2, d, -forceModule);
+      Vector2.addVecMultiplyByScalar(force1, d, forceModule);
+      Vector2.addVecMultiplyByScalar(force2, d, -forceModule);
     }
   }
 };
@@ -105,7 +105,7 @@ export const Spring: System<Pick<
   BaseComponents,
   "spring" | "force" | "position"
 >> = function Spring(world) {
-  var d = Utils.Vector2.make(0.0, 0.0);
+  var d = Vector2.make(0.0, 0.0);
   var force = world.components.force;
   var position = world.components.position;
   for (var [entity, spring] of world.components.spring) {
@@ -129,16 +129,16 @@ export const Spring: System<Pick<
     var e2Position = position.get(spring.entity2);
     if (e2Position === void 0) continue;
 
-    Utils.Vector2.diff(e2Position, e1Position, d);
+    Vector2.diff(e2Position, e1Position, d);
 
-    if (Utils.Vector2.isZero(d)) continue;
+    if (Vector2.isZero(d)) continue;
 
-    var distance = Utils.Vector2.module(d);
+    var distance = Vector2.module(d);
     var forceModule =
       (-(spring.originalDistance - distance) * spring.k) / distance;
 
-    Utils.Vector2.addVecMultiplyByScalar(e1Force, d, forceModule);
-    Utils.Vector2.addVecMultiplyByScalar(e2Force, d, -forceModule);
+    Vector2.addVecMultiplyByScalar(e1Force, d, forceModule);
+    Vector2.addVecMultiplyByScalar(e2Force, d, -forceModule);
   }
 };
 
