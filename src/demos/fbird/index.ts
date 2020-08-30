@@ -11,8 +11,8 @@ export interface FBirdComponents
     | "canvasRectangle"
     | "userControl"
     | "canvasSprite"
-    | "canvasSpritePosition"
     | "canvasText"
+    | "canvasLine"
   > {
   bird: {
     lastTimeKeyPressed: number;
@@ -49,7 +49,7 @@ export function init(world: FBirdWorld) {
     bird: { lastTimeKeyPressed: 0 },
     userControl: {},
     position: { x: birdX, y: birdY },
-    canvasSpritePosition: { x: birdX, y: birdY },
+    canvasSprite: { x: birdX, y: birdY, zIndex: 9 },
     velocity: { x: 0, y: 0 },
     acceleration: { x: 0, y: 0.0005 },
   });
@@ -65,7 +65,7 @@ export function init(world: FBirdWorld) {
       pipe: true,
       position: { x, y },
       velocity: { x: vx, y: 0 },
-      canvasSpritePosition: { x, y },
+      canvasSprite: { x, y, zIndex: 5},
     });
     upperPipes.push(upperPipe);
 
@@ -74,7 +74,7 @@ export function init(world: FBirdWorld) {
       pipe: true,
       position: { x, y },
       velocity: { x: vx, y: 0 },
-      canvasSpritePosition: { x, y },
+      canvasSprite: { x, y, zIndex: 5 },
     });
     bottomPipes.push(bottomPipe);
   }
@@ -86,7 +86,7 @@ export function init(world: FBirdWorld) {
     const tile = Core.World.createEntityFromComponents(world, {
       position: { x, y: 400 },
       velocity: { x: vx, y: 0 },
-      canvasSpritePosition: { x, y: 100 },
+      canvasSprite: { x, y: 100, zIndex: 3 },
       tile: true,
     });
     backgroundTiles.push(tile);
@@ -99,7 +99,7 @@ export function init(world: FBirdWorld) {
     image.onload = async () => {
       const sprite = await createImageBitmap(image);
       for (const entity of backgroundTiles)
-        world.components.canvasSprite.set(entity, sprite);
+        world.components.canvasSprite.get(entity)!.image = sprite;
     };
   }
 
@@ -113,6 +113,7 @@ export function init(world: FBirdWorld) {
       x: 10,
       y: 100,
       text: "Score:",
+      zIndex: 10,
     },
   });
 
@@ -122,7 +123,7 @@ export function init(world: FBirdWorld) {
 
     image.onload = async () => {
       const sprite = await createImageBitmap(image);
-      world.components.canvasSprite.set(bird, sprite);
+      world.components.canvasSprite.get(bird)!.image = sprite;
     };
   }
 
@@ -132,8 +133,9 @@ export function init(world: FBirdWorld) {
 
     image.onload = async () => {
       const sprite = await createImageBitmap(image);
+      // TODO: Use queries instead of upperPipes array
       for (const entity of upperPipes)
-        world.components.canvasSprite.set(entity, sprite);
+        world.components.canvasSprite.get(entity)!.image = sprite;
     };
   }
 
@@ -143,8 +145,9 @@ export function init(world: FBirdWorld) {
 
     image.onload = async () => {
       const sprite = await createImageBitmap(image);
+      // TODO: Use queries instead of bottomPipes array
       for (const entity of bottomPipes)
-        world.components.canvasSprite.set(entity, sprite);
+        world.components.canvasSprite.get(entity)!.image = sprite;
     };
   }
 }
@@ -288,6 +291,7 @@ module Systems {
         const gameOverMessage = world.components.canvasText.get(entity);
         if (gameOverMessage === void 0) {
           world.components.canvasText.set(entity, {
+            zIndex: 10,
             text: "Game Over",
             font: "100px Times New Roman",
             strokeStyle: "orange",
@@ -364,7 +368,7 @@ const world: FBirdWorld = {
     userControl: new Map(),
     canvasRectangle: new Map(),
     canvasSprite: new Map(),
-    canvasSpritePosition: new Map(),
+    canvasLine: new Map()
   },
 };
 
