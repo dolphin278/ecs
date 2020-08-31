@@ -323,7 +323,10 @@ module Systems {
     entitiesWithComponents(["obstacle", "position"] as const, world).forEach(
       ([_, obstacle, position]) => {
         if (position.x < -PIPE_WIDTH) {
-          position.y = obstacle.passageHeight *= 0.8;
+          obstacle.passageHeight *= 0.9;
+          position.y += WORLD_HEIGHT / 4 * Math.random() - WORLD_HEIGHT / 8
+          if (position.y < obstacle.passageHeight / 2) position.y = obstacle.passageHeight
+          else if (WORLD_HEIGHT - position.y < obstacle.passageHeight / 2) position.y = WORLD_HEIGHT - obstacle.passageHeight
           position.x +=
             (SPACE_BETWEEN_PIPES + PIPE_WIDTH) * PIPES_COUNT +
             SPACE_BETWEEN_PIPES;
