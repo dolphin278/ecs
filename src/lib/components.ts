@@ -48,6 +48,9 @@ export interface CanvasSprite extends Vector2 {
   zIndex: number;
 }
 
+export interface EntityMovedEvent { 
+};
+
 export interface BaseComponents {
   position: Position;
   velocity: Velocity;
@@ -60,4 +63,5 @@ export interface BaseComponents {
   canvasLine: CanvasLine;
   canvasText: CanvasText;
   canvasSprite: CanvasSprite;
+  entityMovedEvent: EntityMovedEvent;
 }

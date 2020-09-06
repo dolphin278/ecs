@@ -170,6 +170,7 @@ const world: PlaygroundWorld = {
     canvasLine: new Map(),
     canvasText: new Map(),
     canvasSprite: new Map(),
+    entityMovedEvent: new Map()
   },
 };
 
